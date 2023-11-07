@@ -1,0 +1,63 @@
+﻿@page "/countries"
+@using Export.Data
+@using Syncfusion.Blazor.Navigations
+
+
+<h3>Country</h3>
+
+<SfGrid DataSource="@country"
+        Toolbar="@Toolbaritems" 
+        Width="500px"
+        AllowPaging="true"
+        ContextMenuItems="@(new List<object>(){"SortAscending","SortDescending","FirstPage", "PrevPage","LastPage", "NextPage" })">
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridColumns>
+        <GridColumn Field="@nameof(Country.CountryID)"
+                    HeaderText="ID"
+                    TextAlign="TextAlign.Right"
+                    Width="20">
+        </GridColumn>
+        <GridColumn Field="@nameof(Country.CountryName)"
+                    HeaderText="Country Name"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+        <GridColumn Field="@nameof(Country.CountryISO)"
+                    HeaderText="ISO"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+    </GridColumns>
+    <GridEvents OnToolbarClick="ToolbarClickHandler" RowSelected="RowSelectHandler" TValue="Country">
+    </GridEvents>
+</SfGrid>
+
+<SfDialog @ref="DialogAddEditCountry" 
+          IsModal="true" 
+          Width="500px" 
+          ShowCloseIcon="true" 
+          Visible="false">
+    <DialogTemplates>
+        <Header>@HeaderText</Header>
+    </DialogTemplates>
+    <EditForm Model="addeditCountry" OnValidSubmit="@CountrySave">
+        <div>
+            <SfTextBox Enabled="true" Placeholder="Country Name" FloatLabelType="@FloatLabelType.Always" @bind-Value="addeditCountry.CountryName">
+            </SfTextBox>
+            <SfTextBox Enabled="true" Placeholder="Country ISO" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditCountry.CountryISO">
+            </SfTextBox>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+                <button type="submit" class="e-btn e-normal e-primary">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
+@code {
+
+}

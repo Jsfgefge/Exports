@@ -1,0 +1,1379 @@
+
+    
+=========================================================
+Things you need to do in Visual Studio 
+
+1. Create a Blazor Server project (https://youtu.be/XsCfaJCPnbI)
+
+2. Add Dapper and Microsoft.Data.SqlClient to the Solution (https://www.youtube.com/watch?v=VeCjL9JwPBM)
+
+3. Create your Database (https://youtu.be/RkzRci8SNCw)
+
+4. Just once per database (not for each table in the database), add the correct connectionstring to appsettings.json (see https://www.youtube.com/watch?v=5XyPWMayg2Q)
+
+"ConnectionStrings":{
+     "SqlDBcontext" : "Your connection string here"
+}
+
+5. Just once per database (not each table) in  your Data folder create a file named SqlConnectionConfiguration.cs and
+   add to it the following code.
+
+---------------------------- /DATA/SqlConnectionConfiguration.cs
+namespace Export.Data
+{
+    // Connection to SQL Server database, used within Data subfolder.
+    // You need to set the connection string in appsettings.json and configure Startup.cs yourself.
+    // In startup.cs add the following with the connectionstring name from appsettings.json inplace of YOURCONNECTIONNAME.
+    //  var sqlConnectionConfiguration = new SqlConnectionConfiguration(Configuration.GetConnectionString("YOURCONNECTIONNAME"));
+    //  services.AddSingleton(sqlConnectionConfiguration);
+    public class SqlConnectionConfiguration
+    {
+        public SqlConnectionConfiguration(string value) => Value = value;
+        public string Value { get; }
+    }
+}
+
+6. Just once per database (not each table) put this code just below the line that reads AddSingleton<WeatherForecastService>(); : 
+
+
+-------------------- Note that the name sqlDBcontext has to match the name
+-------------------- that you actually provided in appsetting.json or it won't work.
+
+//SQL database connection (name defined in appsettings.json)
+var SqlConnectionConfiguration = new SqlConnectionConfiguration(Configuration.GetConnectionString("SqlDBcontext"));
+
+services.AddSingleton(SqlConnectionConfiguration);
+//Optional for debugging
+services.AddServerSideBlazor(o => o.DetailedErrors = true);
+
+
+-- Then you can remove the line that reads AddSingleton<WeatherForecastService>(); fron startup.cs.
+
+
+=========================================================
+= Stored procedures go in the database, not the app.    =
+= You can copy them all into a SQL Management query and =
+= select and execute them one at a time.                =
+=========================================================
+-------------- Stored Proc for INSERT
+CREATE PROCEDURE spExportHeader_Insert
+--Parameters for Insert stored procedure
+@InvoiceNo bigint,
+@InvoiceDate date,
+@SerialNo varchar(255),
+@ConsignatarioID bigint,
+@AduanasID bigint,
+@CountryID bigint,
+@CargadorID bigint,
+@BoardingDate date,
+@ExchangeRate decimal(8, 2),
+@Description nvarchar(255),
+@DocTypeID bigint,
+@DuaSimplificada int,
+@Complementaria nvarchar(255),
+@IncotermID int,
+@Closed bit,
+@HandlerID bigint,
+@SupervisorID bigint,
+@AnulledDate bigint,
+@PrimaImportada bit
+AS
+BEGIN
+--SQL for Insert stored procedure
+INSERT INTO ExportHeader(InvoiceNo, InvoiceDate, SerialNo, ConsignatarioID, AduanasID, CountryID, CargadorID, BoardingDate, ExchangeRate, Description, DocTypeID, DuaSimplificada, Complementaria, IncotermID, Closed, HandlerID, SupervisorID, AnulledDate, PrimaImportada) VALUES (@InvoiceNo, @InvoiceDate, @SerialNo, @ConsignatarioID, @AduanasID, @CountryID, @CargadorID, @BoardingDate, @ExchangeRate, @Description, @DocTypeID, @DuaSimplificada, @Complementaria, @IncotermID, @Closed, @HandlerID, @SupervisorID, @AnulledDate, @PrimaImportada)
+END
+
+--------------  Stored Proc for SELECT (LIST, just first six fields but you can change in final code.)
+CREATE PROCEDURE spExportHeader_List
+--No parameters required.
+AS
+BEGIN
+--SQL for Select stored procedure.
+SELECT TOP 30 Headerid, InvoiceNo, InvoiceDate, SerialNo, ConsignatarioID, AduanasID FROM ExportHeader ORDER BY Headerid DESC
+END
+
+--------------  Stored Proc for SELECT (one)
+CREATE PROCEDURE spExportHeader_GetOne
+-- Needs one parameter for primary key
+@Headerid int
+AS 
+BEGIN
+-- SQL Select for one table row
+SELECT Headerid, InvoiceNo, InvoiceDate, SerialNo, ConsignatarioID, AduanasID, CountryID, CargadorID, BoardingDate, ExchangeRate, Description, DocTypeID, DuaSimplificada, Complementaria, IncotermID, Closed, HandlerID, SupervisorID, AnulledDate, PrimaImportada FROM ExportHeader WHERE Headerid= @Headerid
+END
+
+
+--------------  Stored Proc for SELECT LIKE
+CREATE PROCEDURE spExportHeader_Search
+-- One parameter required to identify row to delete.
+@Param varchar(128)
+AS
+BEGIN
+-- SQL for search looking for embedded content. 
+SELECT InvoiceNo, InvoiceDate, SerialNo, ConsignatarioID, AduanasID FROM ExportHeader WHERE CAST(InvoiceNo AS varchar(20)) LIKE '%' + @param + '%' OR CONVERT(varchar(12),InvoiceDate,101) LIKE + '%' + @param + '%' OR SerialNo LIKE '%' + @param + '%' OR CAST(ConsignatarioID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(AduanasID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(CountryID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(CargadorID AS varchar(20)) LIKE '%' + @param + '%' OR CONVERT(varchar(12),BoardingDate,101) LIKE + '%' + @param + '%' OR CAST(ExchangeRate AS varchar(20)) LIKE '%' + @param + '%' OR Description LIKE '%' + @param + '%' OR CAST(DocTypeID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(DuaSimplificada AS varchar(20)) LIKE '%' + @param + '%' OR Complementaria LIKE '%' + @param + '%' OR CAST(IncotermID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(HandlerID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(SupervisorID AS varchar(20)) LIKE '%' + @param + '%' OR CAST(AnulledDate AS varchar(20)) LIKE '%' + @param + '%' 
+END
+
+------------- Stored Proc for SELECT DATA RANGE
+-- Another wild guess, but better than nothin'
+CREATE PROCEDURE spExportHeader_DateRange
+@StartDate date,
+@EndDate date
+AS
+BEGIN
+-- SQL for search looking range of dates
+SELECT InvoiceNo, InvoiceDate, SerialNo, ConsignatarioID, AduanasID FROM ExportHeader WHERE  CAST(InvoiceDate AS Date) Between @startDate AND @endDate
+END
+
+--------------  Stored Proc for UPDATE
+CREATE PROCEDURE spExportHeader_Update
+-- Parameters for Update stored procedure.
+@Headerid bigint,
+@InvoiceNo bigint,
+@InvoiceDate date,
+@SerialNo varchar(255),
+@ConsignatarioID bigint,
+@AduanasID bigint,
+@CountryID bigint,
+@CargadorID bigint,
+@BoardingDate date,
+@ExchangeRate decimal(8, 2),
+@Description nvarchar(255),
+@DocTypeID bigint,
+@DuaSimplificada int,
+@Complementaria nvarchar(255),
+@IncotermID int,
+@Closed bit,
+@HandlerID bigint,
+@SupervisorID bigint,
+@AnulledDate bigint,
+@PrimaImportada bit
+AS
+BEGIN
+-- SQL for Update stored procedure
+UPDATE ExportHeader SET InvoiceNo = @InvoiceNo, InvoiceDate = @InvoiceDate, SerialNo = @SerialNo, ConsignatarioID = @ConsignatarioID, AduanasID = @AduanasID, CountryID = @CountryID, CargadorID = @CargadorID, BoardingDate = @BoardingDate, ExchangeRate = @ExchangeRate, Description = @Description, DocTypeID = @DocTypeID, DuaSimplificada = @DuaSimplificada, Complementaria = @Complementaria, IncotermID = @IncotermID, Closed = @Closed, HandlerID = @HandlerID, SupervisorID = @SupervisorID, AnulledDate = @AnulledDate, PrimaImportada = @PrimaImportada WHERE Headerid = @Headerid
+END
+
+--------------  Stored Proc for DELETE
+CREATE PROCEDURE spExportHeader_Delete
+-- One parameter required to identify row to delete.
+@Headerid int
+AS
+BEGIN
+-- SQL for Delete stored procedure (physically deletes, you may want to change this to mark inactive)
+DELETE FROM ExportHeader WHERE Headerid = @Headerid
+END
+
+
+========================================================
+Back in Visual Studio, you need to add some classes
+and an interface to the Data folder, with the 
+names shown below.
+
+
+You should have three classes, per database table, in the Data folder.
+
+---------------------------- /DATA/ExportHeader.cs
+using System;
+using System.ComponentModel.DataAnnotations;
+// This is the model for one row in the database table. You may need to make some adjustments.
+namespace Export.Data
+{
+    public class ExportHeader
+    {
+	[Required]
+public int Headerid { get; set; }
+[Required]
+public int InvoiceNo { get; set; }
+[Required]
+public DateTime InvoiceDate { get; set; }
+[StringLength(255)]
+public string SerialNo { get; set; }
+[Required]
+public int ConsignatarioID { get; set; }
+[Required]
+public int AduanasID { get; set; }
+[Required]
+public int CountryID { get; set; }
+[Required]
+public int CargadorID { get; set; }
+[Required]
+public DateTime BoardingDate { get; set; }
+[Required]
+public decimal ExchangeRate { get; set; }
+[Required]
+[StringLength(255)]
+public string Description { get; set; }
+[Required]
+public int DocTypeID { get; set; }
+public int DuaSimplificada { get; set; }
+[StringLength(255)]
+public string Complementaria { get; set; }
+[Required]
+public int IncotermID { get; set; }
+[Required]
+public bool Closed { get; set; }
+public int HandlerID { get; set; }
+public int SupervisorID { get; set; }
+public int AnulledDate { get; set; }
+[Required]
+public bool PrimaImportada { get; set; }
+
+    }
+}
+
+---------------------------- /DATA/ExportHeaderService.cs
+// This is the service for the ExportHeader class.
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Threading.Tasks;
+
+namespace Export.Data
+{
+    public class ExportHeaderService : IExportHeaderService
+    {
+        // Database connection
+        private readonly SqlConnectionConfiguration _configuration;
+        public ExportHeaderService(SqlConnectionConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        // Add (create) a ExportHeader table row (SQL Insert)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> ExportHeaderInsert(ExportHeader exportheader)
+        {
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                var parameters = new DynamicParameters();
+			parameters.Add("InvoiceNo", exportheader.InvoiceNo, DbType.Int64);
+parameters.Add("InvoiceDate", exportheader.InvoiceDate, DbType.Date);
+parameters.Add("SerialNo", exportheader.SerialNo, DbType.String);
+parameters.Add("ConsignatarioID", exportheader.ConsignatarioID, DbType.Int64);
+parameters.Add("AduanasID", exportheader.AduanasID, DbType.Int64);
+parameters.Add("CountryID", exportheader.CountryID, DbType.Int64);
+parameters.Add("CargadorID", exportheader.CargadorID, DbType.Int64);
+parameters.Add("BoardingDate", exportheader.BoardingDate, DbType.Date);
+parameters.Add("ExchangeRate", exportheader.ExchangeRate, DbType.Decimal);
+parameters.Add("Description", exportheader.Description, DbType.String);
+parameters.Add("DocTypeID", exportheader.DocTypeID, DbType.Int64);
+parameters.Add("DuaSimplificada", exportheader.DuaSimplificada, DbType.Int32);
+parameters.Add("Complementaria", exportheader.Complementaria, DbType.String);
+parameters.Add("IncotermID", exportheader.IncotermID, DbType.Int32);
+parameters.Add("Closed", exportheader.Closed, DbType.Boolean);
+parameters.Add("HandlerID", exportheader.HandlerID, DbType.Int64);
+parameters.Add("SupervisorID", exportheader.SupervisorID, DbType.Int64);
+parameters.Add("AnulledDate", exportheader.AnulledDate, DbType.Int64);
+parameters.Add("PrimaImportada", exportheader.PrimaImportada, DbType.Boolean);
+
+                // Stored procedure method
+                await conn.ExecuteAsync("spExportHeader_Insert", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }     
+        // Get a list of exportheader rows (SQL Select)
+        // This only works if you're already created the stored procedure.
+        public async Task<IEnumerable<ExportHeader>> ExportHeaderList()
+        {
+            IEnumerable<ExportHeader> exportheaders;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                exportheaders = await conn.QueryAsync<ExportHeader>("spExportHeader_List", commandType: CommandType.StoredProcedure);
+            }
+            return exportheaders;
+        }
+      	//Search for data (very generic...you may need to adjust.
+        public async Task<IEnumerable<ExportHeader>> ExportHeaderSearch(string @Param)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@Param", Param, DbType.String);
+            IEnumerable<ExportHeader> exportheaders;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                exportheaders = await conn.QueryAsync<ExportHeader>("spExportHeader_Search", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return exportheaders;
+        }
+        // Search based on date range. Code generator makes wild guess, you 
+        // will likely need to adjust field names
+        public async Task<IEnumerable<ExportHeader>> ExportHeaderDateRange(DateTime @StartDate, DateTime @EndDate)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@StartDate", StartDate, DbType.Date);
+            parameters.Add("@EndDate", EndDate, DbType.Date);
+            IEnumerable<ExportHeader>  exportheaders;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                exportheaders = await conn.QueryAsync<ExportHeader>("spExportHeader_DateRange", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return exportheaders;
+        }
+
+        // Get one exportheader based on its ExportHeaderID (SQL Select)
+        // This only works if you're already created the stored procedure.
+        public async Task<ExportHeader> ExportHeader_GetOne(int @Headerid)
+        {
+            ExportHeader exportheader = new ExportHeader();
+            var parameters = new DynamicParameters();
+            parameters.Add("@Headerid", Headerid, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                exportheader = await conn.QueryFirstOrDefaultAsync<ExportHeader>("spExportHeader_GetOne",parameters,commandType: CommandType.StoredProcedure);
+            }
+            return exportheader;
+        }
+        // Update one ExportHeader row based on its ExportHeaderID (SQL Update)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> ExportHeaderUpdate(ExportHeader exportheader)
+        {
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("Headerid", exportheader.Headerid, DbType.Int64);
+
+			    parameters.Add("InvoiceNo", exportheader.InvoiceNo, DbType.Int64);
+parameters.Add("InvoiceDate", exportheader.InvoiceDate, DbType.Date);
+parameters.Add("SerialNo", exportheader.SerialNo, DbType.String);
+parameters.Add("ConsignatarioID", exportheader.ConsignatarioID, DbType.Int64);
+parameters.Add("AduanasID", exportheader.AduanasID, DbType.Int64);
+parameters.Add("CountryID", exportheader.CountryID, DbType.Int64);
+parameters.Add("CargadorID", exportheader.CargadorID, DbType.Int64);
+parameters.Add("BoardingDate", exportheader.BoardingDate, DbType.Date);
+parameters.Add("ExchangeRate", exportheader.ExchangeRate, DbType.Decimal);
+parameters.Add("Description", exportheader.Description, DbType.String);
+parameters.Add("DocTypeID", exportheader.DocTypeID, DbType.Int64);
+parameters.Add("DuaSimplificada", exportheader.DuaSimplificada, DbType.Int32);
+parameters.Add("Complementaria", exportheader.Complementaria, DbType.String);
+parameters.Add("IncotermID", exportheader.IncotermID, DbType.Int32);
+parameters.Add("Closed", exportheader.Closed, DbType.Boolean);
+parameters.Add("HandlerID", exportheader.HandlerID, DbType.Int64);
+parameters.Add("SupervisorID", exportheader.SupervisorID, DbType.Int64);
+parameters.Add("AnulledDate", exportheader.AnulledDate, DbType.Int64);
+parameters.Add("PrimaImportada", exportheader.PrimaImportada, DbType.Boolean);
+
+                await conn.ExecuteAsync("spExportHeader_Update", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }
+
+        // Physically delete one ExportHeader row based on its ExportHeaderID (SQL Delete)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> ExportHeaderDelete(int Headerid)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@Headerid", Headerid, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                await conn.ExecuteAsync("spExportHeader_Delete",parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }
+    }
+}
+
+---------------------------- /Data/IExportHeaderService.cs
+// This is the ExportHeader Interface
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Export.Data
+{
+    // Each item below provides an interface to a method in ExportHeaderServices.cs
+    public interface IExportHeaderService
+    {
+        Task<bool> ExportHeaderInsert(ExportHeader exportheader);
+        Task<IEnumerable<ExportHeader>> ExportHeaderList();
+        Task<IEnumerable<ExportHeader>> ExportHeaderSearch(string Param);
+        Task<IEnumerable<ExportHeader>> ExportHeaderDateRange(DateTime @StartDate, DateTime @EndDate);
+        Task<ExportHeader> ExportHeader_GetOne(int Headerid);
+        Task<bool> ExportHeaderUpdate(ExportHeader exportheader);
+        Task<bool> ExportHeaderDelete(int Headerid);
+    }
+}
+=======================================================
+= With the classes finished, open up Startup.cs and 
+= add the services.AddScoprf linr below to the 
+=  public void ConfigureService{} block, perhaps just
+=  above the comment and code that defines SqlConnectionConfiguration
+========================================================
+
+services.AddScoped<IExportHeaderService, ExportHeaderService>();
+
+
+=========================================================
+= Next comes the pages. Each goes in the Pages folder
+= and each should be defined as a Razor Component.                                             
+=========================================================
+
+---------------------------- /PAGES/ExportHeaderAddEdit.razor
+@using Export.Data
+@page "/exportheaderaddedit/{Headerid:int}"
+@inject IExportHeaderService ExportHeaderService
+@inject NavigationManager NavigationManager
+
+<h1 style="text-align:center">@pagetitle</h1>
+<EditForm Model="@exportheader" OnValidSubmit="@ExportHeaderSave" class="form-inline">
+<div class="container">
+        <!-- You may want to change some type="" choices to better suit your own data -->
+        <div class='row'>
+<div class='col-2'>
+<label for = 'InvoiceNo'>InvoiceNo:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.InvoiceNo" class='form-control' id = 'InvoiceNo'/></div>
+<div class='col-2'>
+<label for = 'InvoiceDate'>InvoiceDate:</label>
+</div>
+<div class='col-4'>
+<InputDate @bind-Value = "exportheader.InvoiceDate" class='form-control' min="1753-01-01" max="9999-12-31" id = 'InvoiceDate'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'SerialNo'>SerialNo:</label>
+</div>
+<div class='col-4'>
+<InputText @bind-Value = "exportheader.SerialNo" class='form-control' style='width:100%;' id = 'SerialNo'/></div>
+<div class='col-2'>
+<label for = 'ConsignatarioID'>ConsignatarioID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.ConsignatarioID" class='form-control' id = 'ConsignatarioID'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'AduanasID'>AduanasID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.AduanasID" class='form-control' id = 'AduanasID'/></div>
+<div class='col-2'>
+<label for = 'CountryID'>CountryID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.CountryID" class='form-control' id = 'CountryID'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'CargadorID'>CargadorID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.CargadorID" class='form-control' id = 'CargadorID'/></div>
+<div class='col-2'>
+<label for = 'BoardingDate'>BoardingDate:</label>
+</div>
+<div class='col-4'>
+<InputDate @bind-Value = "exportheader.BoardingDate" class='form-control' min="1753-01-01" max="9999-12-31" id = 'BoardingDate'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'ExchangeRate'>ExchangeRate:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.ExchangeRate" class='form-control' id = 'ExchangeRate'/></div>
+<div class='col-2'>
+<label for = 'Description'>Description:</label>
+</div>
+<div class='col-4'>
+<InputText @bind-Value = "exportheader.Description" class='form-control' style='width:100%;' id = 'Description'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'DocTypeID'>DocTypeID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.DocTypeID" class='form-control' id = 'DocTypeID'/></div>
+<div class='col-2'>
+<label for = 'DuaSimplificada'>DuaSimplificada:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.DuaSimplificada" class='form-control' id = 'DuaSimplificada'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'Complementaria'>Complementaria:</label>
+</div>
+<div class='col-4'>
+<InputText @bind-Value = "exportheader.Complementaria" class='form-control' style='width:100%;' id = 'Complementaria'/></div>
+<div class='col-2'>
+<label for = 'IncotermID'>IncotermID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.IncotermID" class='form-control' id = 'IncotermID'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'Closed'>Closed:</label>
+</div>
+<div class='col-4'>
+<InputCheckbox @bind-Value = "exportheader.Closed" class='form-control' id = 'Closed'/></div>
+<div class='col-2'>
+<label for = 'HandlerID'>HandlerID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.HandlerID" class='form-control' id = 'HandlerID'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'SupervisorID'>SupervisorID:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.SupervisorID" class='form-control' id = 'SupervisorID'/></div>
+<div class='col-2'>
+<label for = 'AnulledDate'>AnulledDate:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "exportheader.AnulledDate" class='form-control' id = 'AnulledDate'/></div>
+</div>
+<div class='row'>
+<div class='col-2'>
+<label for = 'PrimaImportada'>PrimaImportada:</label>
+</div>
+<div class='col-4'>
+<InputCheckbox @bind-Value = "exportheader.PrimaImportada" class='form-control' id = 'PrimaImportada'/></div>
+
+
+<div class="row">
+<div class="col-12 errormsg">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+</div>
+</div>
+<div class="row">
+<div class="col-12 buttons">
+<button class="btn btn-primary">@buttontext</button>
+<button class="btn btn-secondary" @onclick="@Cancel">Cancel</button>
+</div>
+</div>
+</div>
+</EditForm>
+
+@code {
+   // Create a new, empty ExportHeader object
+   ExportHeader exportheader = new ExportHeader();
+
+    [Parameter]
+    public int Headerid { get; set; }
+
+    // Set default page title and button text
+    public string pagetitle = "Add a ExportHeader";
+    public string buttontext = "Add";
+
+    //Executes on page open, set defaults on page.
+    protected override async Task OnInitializedAsync()
+    {
+        // ============ If the passed-in Headerid is zero, assume new ExportHeader.
+        if (Headerid == 0)
+        {
+            // Use this block to set for defaults (optional)
+        }
+        else
+        {
+            exportheader = await ExportHeaderService.ExportHeader_GetOne(Headerid);
+            // Change page title and button text since this is an edit.
+            pagetitle = "Edit ExportHeader";
+            buttontext = "Update";
+        }
+    }
+    // Executes OnValidSubmit of EditForm above.
+    protected async Task ExportHeaderSave()
+    {
+        if (exportheader.Headerid == 0)
+        {
+            // Insert if Headerid is zero.
+            await ExportHeaderService.ExportHeaderInsert(exportheader);
+        }
+        else
+        {
+            // Update if Headerid not 0
+            await ExportHeaderService.ExportHeaderUpdate(exportheader);
+        }
+        NavigationManager.NavigateTo("/exportheaderlist");
+    }
+    //Executes if user clicks the Cancel button.
+    protected void Cancel()
+    {
+        NavigationManager.NavigateTo("/exportheaderlist");
+    }
+}
+
+---------------------------- /PAGES/ExportHeaderList.razor
+@using Export.Data
+@page "/exportheaderlist"
+@inject IExportHeaderService ExportHeaderService
+
+<h1 style="text-align:center">ExportHeader List</h1>
+<table id="search-add">
+<tr>
+<td>
+    <!-- Calling exportheaderaddedit with Headerid of zero configures page for Insert -->
+    <a href="/exportheaderaddedit/0"><span class="oi oi-plus"></span>Add a ExportHeader</a>
+    </td>
+    <td>
+    <span class="oi oi-magnifying-glass" style="color:blue;"></span>
+    <input id="tbSearch" @bind-value="@SearchTerm"  @bind-value:event="oninput" @onkeyup="SearchKeyPress" />
+    &nbsp;<button @onclick="@Search" class="btn btn-primary">Search</button>
+    </td>
+    </tr>
+
+</table>
+<div id="list" style="display:@Listdisplay">
+@if (exportheaders == null)
+{
+    <p style="text-align:center">
+        <img src="../images/loader.gif" />
+    </p>
+}
+else
+{
+    <table class="genlist">
+        <tr>
+                <!-- Indicates what rows below are showing -->
+                <td colspan="7" style="text-align:left;font-weight:bold;font-size:120%">@Nowshowing</td>
+            </tr>
+        <tr>
+            <th>Edit</th>
+		<th>InvoiceNo</th><th>InvoiceDate</th><th>SerialNo</th><th>ConsignatarioID</th><th>AduanasID</th>
+            <th>Delete</th>
+        </tr>
+        @foreach (var exportheader in exportheaders)
+        {
+    <tr>
+        <td>
+            <!-- Calling exportheaderaddedit with Headerid configures page for Update of that table row -->
+            <a href="exportheaderaddedit/@exportheader.Headerid">
+                <span class="oi oi-pencil" style="color:blue;"></span>
+                <!-- If you prefer images, comment below and put images in wwwroot/images folder 
+                <img src="../images/iEdit.png" />-->
+            </a>
+        </td>
+		<td>@exportheader.InvoiceNo</td><td>@exportheader.InvoiceDate</td><td>@exportheader.SerialNo</td><td>@exportheader.ConsignatarioID</td><td>@exportheader.AduanasID</td>
+        <!-- If you want to use a checkmark for a IsActive field, here's the basic code  -->
+        <!-- You have to uncomment and get the field name right -->
+        <!-- <td> -->
+            <!-- Provide your own images in wwwroot/images folder -->
+       <!--     @*Show a green check for active exportheader...*@ -->
+       <!--     @if (exportheader.IsActive) -->
+       <!--     { -->
+       <!--     <span class="oi oi-check" style="color:green;"></span> -->
+            <!-- If you prefer images, comment below and put images in wwwroot/images folder 
+       <!--         <img src="../images/iGreenCheck.png" /> -->
+       <!--     } -->
+       <!--     @* ...a red X otherwise *@ -->
+       <!--     else -->
+       <!--     { -->
+       <!--    <span class="oi oi-x" style="color:red;"></span> -->
+       <!--      If you prefer images, comment below and put images in wwwroot/images folder -->
+       <!--         <img src="../images/iRedX.png" />-->
+       <!--     }-->
+       <!-- </td>-->
+        @* This column for deletes *@
+        
+        <td>
+            <a href="exportheaderdelete/@exportheader.Headerid">
+            <span class="oi oi-trash" style="color:red;"></span>
+            <!-- If you prefer images, uncomment the img tag and put images in wwwroot/images
+                <img src="../images/iTrash.png" alt="Delete" title="Delete" /> -->
+            </a>
+        </td>
+    </tr>
+        }
+    </table>
+}
+</div>
+<!-- Error message for to few or to many in search results -->
+<div class="error" style="display:@Errordisplay">
+    <h2>@SearchError</h2>
+</div>
+
+@code {
+    //Variable used for searching (tbSearch)
+    public string SearchTerm { get; set; }
+    public string SearchError = "";
+    public string Listdisplay = "block";
+    public string Errordisplay = "none";
+    public string Nowshowing = "Recent Entries";
+    // Create an empty list, named exportheaders, of empty ExportHeader objects.
+    IEnumerable<ExportHeader> exportheaders;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        //Populate the list of exportheader objects from the ExportHeader table.
+        exportheaders = await ExportHeaderService.ExportHeaderList();
+    }
+    
+    //Make pressing ENTER in the search box the same as clicking the Search button.
+    private void SearchKeyPress(KeyboardEventArgs ev)
+    {
+        if (ev.Key == "Enter")
+        {
+            //System.Diagnostics.Debug.WriteLine(ev.Key);
+            Search();
+        }
+    }
+    
+    //Do the search
+    private async void Search()
+    {
+    //Forces the progress indicator to show while searching.
+    if (SearchTerm.Length > 0 ) {
+        exportheaders = null;
+        Nowshowing = "Contains: " + SearchTerm;
+        StateHasChanged();
+        //Does the search and stores result in exportheaders collection.
+        exportheaders  = await ExportHeaderService.ExportHeaderSearch(SearchTerm);
+        var howmany = exportheaders.Count();
+        // Show results or error depending on how many found.
+          switch (howmany)
+          {
+            case int n when (n < 1):
+                errorMessage("Not found, please try another search");
+                break;
+            case int n when (n > 250):
+                errorMessage("More than 250 results, please try a different search.");
+                break;
+            default:
+                //Show the search results and count.
+                Nowshowing += " (" + howmany + ")";
+                errorMessage("");
+                StateHasChanged();
+                break;
+          } 
+        } else {
+            //If no search term, just do the default list.
+            Nowshowing = "Recent entries";
+            exportheaders = await ExportHeaderService.ExportHeaderList();
+            StateHasChanged();
+        }
+
+        //Show or hide the search results error message.
+        void errorMessage(string msgText)
+        {
+            if (msgText.Length > 0)
+            {
+                Listdisplay = "none";
+                Errordisplay = "block";
+                SearchError = msgText;
+            }
+            else
+            {
+                Listdisplay = "block";
+                Errordisplay = "none";
+                SearchError = "";
+            }
+            //Re-render the page.
+            StateHasChanged();
+        }
+        //System.Diagnostics.Debug.WriteLine(howmany);
+    }
+}
+
+
+---------------------------- /Pages/ExportHeaderReport.razor
+@using Export.Data
+@page "/exportheaderreport"
+@inject IExportHeaderService ExportHeaderService
+@inject NavigationManager NavigationManager
+
+  <div id="date-search-tools">
+        <div id="GetDates" style="display:@ToolsVisible">
+        <h1 style="text-align:center">ExportHeader Report</h1>
+            <table>
+                <tr>
+                    <td>
+                        Start Date: <input type="date" id="tbStartDate" @bind-value="@StartDate" />
+                    </td>
+                    <td>
+                        End Date: <input type="date" id="tbEndtDate" @bind-value="@EndDate" @bind-value:event="oninput" @onkeyup="SearchKeyPress" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align:center;">
+                        &nbsp;<button @onclick="@Search" class="btn btn-primary">Search</button>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
+    <div id="list" style="display:@ReportVisible">
+      <table id="search-buttons">
+            <tr>
+                <td><button class="btn btn-primary" onclick="window.print()">Print or PDF</button></td>
+                <td><button class="btn btn-secondary" onclick="location.href='exportheaderreport'">Cancel</button>
+                </td>
+            </tr>
+        </table>
+    <h1 style="text-align:center">ExportHeader Report</h1>
+    <p style="text-align:center;">From @StartDate.ToShortDateString() to @EndDate.ToShortDateString()</p>
+        <table class="genlist">
+            <thead>
+                <tr>
+              		<th>InvoiceNo</th><th>InvoiceDate</th><th>SerialNo</th><th>ConsignatarioID</th><th>AduanasID</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (exportheaders != null)
+                {
+                    @foreach (var exportheader in exportheaders)
+                    {
+                    <tr>
+	                   	<td>@exportheader.InvoiceNo</td><td>@exportheader.InvoiceDate</td><td>@exportheader.SerialNo</td><td>@exportheader.ConsignatarioID</td><td>@exportheader.AduanasID</td>
+                    </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        <table id="search-buttons">
+            <tr>
+                <td><button class="btn btn-primary" onclick="window.print()">Print or PDF</button></td>
+                <td><button class="btn btn-secondary" onclick="location.href='exportheaderreport'">Cancel</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+       <!-- Error message for to few or to many in search results -->
+    <div class="error" style="display:@Errordisplay">
+        <h1>@SearchError</h1>
+    </div>
+   
+   @code {
+        //Variables used for searching
+        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateTime EndDate { get; set; } = DateTime.Today;
+        public string SearchError = "";
+        public string ToolsVisible = "block";
+        public string ReportVisible = "none";
+        public string Errordisplay = "none";
+
+        // Create an empty list, named videos, of empty Video objects.
+        IEnumerable<ExportHeader> exportheaders;
+
+        protected override void OnInitialized()
+        {
+            @if (exportheaders == null)
+            {
+                ShowReport(false);
+            }
+            else
+            {
+                ShowReport(true);
+            }
+            StateHasChanged();
+        }
+
+        //Make pressing ENTER in the search box the same as clicking the Search button.
+        private void SearchKeyPress(KeyboardEventArgs ev)
+        {
+            if (ev.Key == "Enter")
+            {
+                //System.Diagnostics.Debug.WriteLine(ev.Key);
+                Search();
+            }
+        }
+        private void ShowReport(bool ShowRep)
+        {
+            if (ShowRep)
+            {
+                ToolsVisible = "none";
+                ReportVisible = "block";
+            }
+            else
+            {
+                ToolsVisible = "block";
+                ReportVisible = "none";
+            }
+        }
+
+        //Do the search
+        private async void Search()
+        {
+            exportheaders = null;
+            StateHasChanged();
+            //Does the search and stores result in collection.
+            exportheaders = await ExportHeaderService.ExportHeaderDateRange(StartDate, EndDate);
+            var howmany = exportheaders.Count();
+            // Show results or error depending on how many found.
+            if (howmany < 1 ) {
+               errorMessage("Not found, try another search");
+            } else {
+               errorMessage("");
+            }
+            StateHasChanged();
+
+            ////Show or hide the search results error message.
+            void errorMessage(string msgText)
+            {
+                if (msgText.Length > 0)
+                {
+                    ShowReport(false);
+                    Errordisplay = "block";
+                    SearchError = msgText;
+                } else  {
+                    ShowReport(true);
+                    Errordisplay = "none";
+                    SearchError = "";
+                }
+                //Re-render the page.
+                StateHasChanged();
+            }
+
+            //System.Diagnostics.Debug.WriteLine(howmany);
+        }
+    }
+
+
+---------------------------- /Pages/ExportHeaderDelete.razor
+@using Export.Data
+@page "/exportheaderdelete/{Headerid:int}"
+@inject IExportHeaderService ExportHeaderService
+@inject NavigationManager NavigationManager
+
+
+<h1 style="text-align:center">Delete a ExportHeader</h1>
+<p style="color:red;text-align:center">Are you sure you want to permanently delete this exportheader? There is no undo!</p>
+
+<table class="genform">
+	<div class='form-group'>InvoiceNo:@exportheader.InvoiceNo</div>
+<div class='form-group'>InvoiceDate:@exportheader.InvoiceDate</div>
+<div class='form-group'>SerialNo:@exportheader.SerialNo</div>
+<div class='form-group'>ConsignatarioID:@exportheader.ConsignatarioID</div>
+<div class='form-group'>AduanasID:@exportheader.AduanasID</div>
+<div class='form-group'>CountryID:@exportheader.CountryID</div>
+<div class='form-group'>CargadorID:@exportheader.CargadorID</div>
+<div class='form-group'>BoardingDate:@exportheader.BoardingDate</div>
+<div class='form-group'>ExchangeRate:@exportheader.ExchangeRate</div>
+<div class='form-group'>Description:@exportheader.Description</div>
+<div class='form-group'>DocTypeID:@exportheader.DocTypeID</div>
+<div class='form-group'>DuaSimplificada:@exportheader.DuaSimplificada</div>
+<div class='form-group'>Complementaria:@exportheader.Complementaria</div>
+<div class='form-group'>IncotermID:@exportheader.IncotermID</div>
+<div class='form-group'>Closed:@exportheader.Closed</div>
+<div class='form-group'>HandlerID:@exportheader.HandlerID</div>
+<div class='form-group'>SupervisorID:@exportheader.SupervisorID</div>
+<div class='form-group'>AnulledDate:@exportheader.AnulledDate</div>
+<div class='form-group'>PrimaImportada:@exportheader.PrimaImportada</div>
+
+    <tr>
+        <td colspan="2" style="text-align:center">
+            <button class="btn btn-primary" @onclick="@Delete">Delete</button>
+            <button class="btn btn-secondary" @onclick="@Cancel">Cancel</button>
+        </td>
+    </tr>
+</table>
+
+@code {
+    // Create a new, empty ExportHeader object
+    ExportHeader exportheader = new ExportHeader();
+
+    [Parameter]
+    public int Headerid { get; set; }
+
+    //Executes on page open..
+    protected override async Task OnInitializedAsync()
+    {
+        exportheader = await ExportHeaderService.ExportHeader_GetOne(Headerid);
+    }
+    //Executes if user confirms the deletion.
+    protected async Task Delete()
+    {
+        // Delete the row and go back to the list. 
+        // In the SProc you can set IsActive to 0 rather than physically delete.
+        await ExportHeaderService.ExportHeaderDelete(Headerid);
+        NavigationManager.NavigateTo("/exportheaderlist");
+    }
+    // Executes when user clicks the Cancel button.
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/exportheaderlist");
+    }
+}
+
+=========================================================
+=Link to the page that lists items, which should have links 
+= for adding editing and deleting. I made it match the code
+= in NavMenu.cs but of course you can style links 
+= however you like.
+=========================================================
+<li class="nav-item px-3">
+   <NavLink class="nav-link" href="exportheaderlist" Match="NavLinkMatch.All">
+      <span class="oi" aria-hidden="true"></span>ExportHeader
+   </NavLink>
+</li>
+
+==========================================================================
+= If you need to use this table for a dropdown list control, here is 
+= some code to help, but you;ll have to flesh-out the details on your own
+==========================================================================
+------------------------- Stored Procedure for dropdown.
+CREATE PROCEDURE [dbo].[spExportHeader_GetDropdown]
+        @IncludeNumber int
+        AS
+        BEGIN
+		-- You'll have to provide your own field names, and maybe change IsActive if you don't have that field
+        SELECT        YOUR_BOUND_FIELD, YOU_DROPDOWN-VISIBLE_FIELD
+        FROM            ExportHeader
+        WHERE IsActive = 1  OR Headerid = @IncludeNumber
+        ORDER BY YOUR_ORDER_BY_FIELD 
+END
+
+---------------------------- For the Service Class.
+public async Task<IEnumerable<ExportHeader>> ExportHeader_GetDropdown(int @IncludeNumber)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@IncludeNumber", IncludeNumber, DbType.Int32);
+
+        IEnumerable<ExportHeader> exportheaders;
+        using (var conn = new SqlConnection(_configuration.Value))
+            {
+                exportheaders; = await conn.QueryAsync<ExportHeader>("spExportHeader_GetDropdown", parameters, commandType: CommandType.StoredProcedure);
+            }
+        return exportheaders;
+    }
+
+---------------------------- For the Iservice Class.
+Task<IEnumerable<ExportHeader>> ExportHeader_GetDropdown(int @IncludeNumber);
+
+---------------------------- For the top of AddEdit page.
+@inject IExportHeaderService ExportHeaderService
+
+---------------------------- Near the top of the @Code{} section.
+//For the dropdown
+ExportHeader exportheader = new ExportHeader();
+IEnumerable<ExportHeader> exportheaders;
+
+
+------------------------- Code to populate dropdown for new INSERT rows (in OnInitAsync when Row ID is zero):
+//Populate the dropdown, no inActive items required on new entry 
+exportheaders = await ExportHeaderService.ExportHeader_GetDropdown(0);
+
+------------------------ Code to populate dropdown for new UPDATE rows (in OnInitAsync when Row ID is NOT zero):
+//When doing an update, include the id of the current item in case
+//it's been marked inactive since initally applied.
+MAINPAGE x = new MAINPAGE();
+x = await MAINPAGESERVICE.MAINPAGE_GetOne(ID OF ITEM ON MAIN PAGE);
+//Need to include this row's selected item in the dropdown, even it it's no longer active.
+exportheaders = await ExportHeaderService.ExportHeader_GetOne(KEY_OF_AddEdit_PAGE_ROW);
+
+------------------------ The actual select control on the AddEdit page where user makes their choice.
+<InputSelect @bind-Value="MAINPAGE.KEYVALUE" class='form-control' id='KEYVALUE'>
+    @if (objectlist != null)
+    {
+        @foreach (var exportheader in exportheaders)
+            {
+                <option value="exportheader.KEYVALUE">exportheader.FIELD_THAT_SHOWS_IN_DROPDOWN</option>
+            }
+    }
+</InputSelect>
+			
+===========================================================================
+= End of optional Dropdown List code
+===========================================================================
+
+
+
+===========================================================
+= You can put this CSS code on wwwroot/css/site.css if    =
+= you want some rudimentary styling for the generated html=
+===========================================================
+
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    height: 40px;
+    width: 100%;
+    background-color: #82C7FF;
+    padding-right: 10px;
+    z-index: 100;
+}
+
+    header img {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        height: 48px;
+        z-index: 3200;
+    }
+
+    header h1 {
+        margin-left: 48px;
+        color: white;
+        font-size: 18pt;
+        line-height: 40px;
+        text-shadow: 1px 1px 0px rgba(0,0,0,.9);
+        padding: 2px 0 0 8px;
+    }
+
+    header div {
+        position: absolute;
+        top: 0;
+        right: 10px;
+        width: 60%;
+        line-height: 40px;
+    }
+
+aside {
+    position: fixed;
+    left: 0;
+    top: 40px;
+    width: 200px;
+    height: 100vh;
+    background-color: #82C7FF;
+    padding-top: 30px;
+}
+
+    aside a {
+        display: block;
+        width: 80%;
+        margin: 2em auto;
+        padding: 6px 3px;
+        border: solid 1px rgba(255,255,255,.8);
+        text-decoration: none;
+        border-radius: 4px;
+        background-color: rgba(255,255,255,.6);
+        text-align: center;
+        color: black;
+        font-size: 85%;
+    }
+
+        aside a:hover {
+            text-decoration: none;
+            color: lightseagreen;
+            border: solid 1px rgba(255,255,255,.6);
+            background-color: rgba(255,255,255,.8);
+        }
+
+main {
+    margin: 40px 16px 0 210px;
+    padding: 8px;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255,255,255,.7);
+    font-size: 80%;
+    text-align: center;
+    color: darkgrey;
+}
+
+#homepage {
+    text-align: center;
+}
+
+
+/* From Blazor/Dapper code generator */
+
+table.genlist {
+    border-collapse: collapse;
+    margin: 1em auto;
+}
+
+/* Generated list */
+
+.genlist tr:nth-child(odd) {
+    background-color: Aliceblue;
+}
+
+.genlist tr:hover {
+    background-color: lightyellow;
+}
+
+.genlist th, .genlist td {
+    border: solid 1px silver;
+    padding: 2px 4px;
+    font-size: 90%;
+    font-family: 'Arial Narrow', Arial, sans-serif
+}
+
+    .genlist td:first-child,
+    .genlist td:last-child {
+        text-align: center;
+    }
+
+.genlist td {
+    max-width: 400px;
+}
+
+.genlist th,
+.genlist td {
+    padding: 2px 4px;
+}
+
+.container {
+    border: dotted pink 1px;
+}
+
+    .container .col-2,
+    .container .col-4,
+    .container .col-12 {
+        border: dotted yellow 1px;
+    }
+/* CSS for generated forms */
+.genform input.form-control {
+    height: auto !important;
+    padding: 2px 4px !important;
+}
+
+.genform select.form-control {
+    height: auto !important;
+    padding: 4px !important;
+    margin-bottom: 4px;
+}
+
+.genform input[type="date"].form-control,
+.genform input[type="number"].form-control {
+    height: auto !important;
+    padding: 2px 4px !important;
+    width: 200px;
+    display: inline;
+}
+
+.genform input[type="checkbox"] {
+    /*    width: 20px;
+    height: 20px;*/
+}
+
+.genform input:read-only {
+    border: none;
+    background-color: transparent;
+    color: darkgray;
+}
+
+    .genform input:read-only:focus,
+    .genform input:read-only valid {
+        border: none;
+    }
+
+.genform input[type="checkbox"].form-control {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.genform input[type="checkbox"] + label {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+}
+
+
+/* Labels for controls  */
+.lbl {
+    text-align: right;
+    font-weight: bold;
+}
+
+
+.buttons {
+    padding: 10px 0;
+    text-align: center;
+}
+
+
+.errormsg {
+    text-align: center;
+    color: red;
+}
+
+/* Table that holds the Add and Search options for ...List pages. */
+table#search-add {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+    table#search-add td {
+        min-width: 400px;
+    }
+
+        table#search-add td:nth-child(1) {
+            text-align: left;
+        }
+
+        table#search-add td:nth-child(2) {
+            text-align: right;
+        }
+
+        table#search-add td input {
+            border-radius: 4px;
+            border: solid 1px silver;
+        }
+
+/* Controls that let people search by date range */
+#date-search-tools table {
+    margin: 1em auto;
+    border-collapse: collapse;
+}
+
+    #date-search-tools table td {
+        border: solid 1px silver;
+        padding: 6px 4px;
+    }
+
+        #date-search-tools table td input {
+            width: 140px;
+        }
+
+#search-buttons {
+    margin: 1em auto;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.strikethrough {
+    text-decoration: line-through;
+    text-decoration-color: red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+/* Boostrap overrides */
+/*@media (min-width: 576px) {
+    .form-inline .form-control {
+        width: 100% !important;
+    }
+}*/
+
+=========================================================
+= If you want to use my images, copy the images folder  =
+= from the wwwroot in BlazorDapperGen to the wwwroot    =
+= folder in your own project.                           =
+=========================================================
+===============================================================================
+End of generated code.
+===============================================================================

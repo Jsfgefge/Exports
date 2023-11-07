@@ -1,0 +1,1160 @@
+
+=========================================================
+Things you need to do in Visual Studio 
+
+1. Create a Blazor Server project (https://youtu.be/XsCfaJCPnbI)
+
+2. Add Dapper and Microsoft.Data.SqlClient to the Solution (https://www.youtube.com/watch?v=VeCjL9JwPBM)
+
+3. Create your Database (https://youtu.be/RkzRci8SNCw)
+
+4. Just once per database (not for each table in the database), add the correct connectionstring to appsettings.json (see https://www.youtube.com/watch?v=5XyPWMayg2Q)
+
+"ConnectionStrings":{
+     "SqlDBcontext" : "Your connection string here"
+}
+
+5. Just once per database (not each table) in  your Data folder create a file named SqlConnectionConfiguration.cs and
+   add to it the following code.
+
+---------------------------- /DATA/SqlConnectionConfiguration.cs
+namespace Export.Data
+{
+    // Connection to SQL Server database, used within Data subfolder.
+    // You need to set the connection string in appsettings.json and configure Startup.cs yourself.
+    // In startup.cs add the following with the connectionstring name from appsettings.json inplace of YOURCONNECTIONNAME.
+    //  var sqlConnectionConfiguration = new SqlConnectionConfiguration(Configuration.GetConnectionString("YOURCONNECTIONNAME"));
+    //  services.AddSingleton(sqlConnectionConfiguration);
+    public class SqlConnectionConfiguration
+    {
+        public SqlConnectionConfiguration(string value) => Value = value;
+        public string Value { get; }
+    }
+}
+
+6. Just once per database (not each table) put this code just below the line that reads AddSingleton<WeatherForecastService>(); : 
+
+
+-------------------- Note that the name sqlDBcontext has to match the name
+-------------------- that you actually provided in appsetting.json or it won't work.
+
+//SQL database connection (name defined in appsettings.json)
+var SqlConnectionConfiguration = new SqlConnectionConfiguration(Configuration.GetConnectionString("SqlDBcontext"));
+
+services.AddSingleton(SqlConnectionConfiguration);
+//Optional for debugging
+services.AddServerSideBlazor(o => o.DetailedErrors = true);
+
+
+-- Then you can remove the line that reads AddSingleton<WeatherForecastService>(); fron startup.cs.
+
+
+=========================================================
+= Stored procedures go in the database, not the app.    =
+= You can copy them all into a SQL Management query and =
+= select and execute them one at a time.                =
+=========================================================
+-------------- Stored Proc for INSERT
+CREATE PROCEDURE spCountry_Insert
+--Parameters for Insert stored procedure
+@CountryName bigint,
+@CountryISO bigint
+AS
+BEGIN
+--SQL for Insert stored procedure
+INSERT INTO Country(CountryName, CountryISO) VALUES (@CountryName, @CountryISO)
+END
+
+--------------  Stored Proc for SELECT (LIST, just first six fields but you can change in final code.)
+CREATE PROCEDURE spCountry_List
+--No parameters required.
+AS
+BEGIN
+--SQL for Select stored procedure.
+SELECT TOP 30 CountryID, CountryName, CountryISO FROM Country ORDER BY CountryID DESC
+END
+
+--------------  Stored Proc for SELECT (one)
+CREATE PROCEDURE spCountry_GetOne
+-- Needs one parameter for primary key
+@CountryID int
+AS 
+BEGIN
+-- SQL Select for one table row
+SELECT CountryID, CountryName, CountryISO FROM Country WHERE CountryID= @CountryID
+END
+
+
+--------------  Stored Proc for SELECT LIKE
+CREATE PROCEDURE spCountry_Search
+-- One parameter required to identify row to delete.
+@Param varchar(128)
+AS
+BEGIN
+-- SQL for search looking for embedded content. 
+SELECT CountryName, CountryISO FROM Country WHERE CAST(CountryName AS varchar(20)) LIKE '%' + @param + '%' OR CAST(CountryISO AS varchar(20)) LIKE '%' + @param + '%' 
+END
+
+------------- Stored Proc for SELECT DATA RANGE
+-- Another wild guess, but better than nothin'
+CREATE PROCEDURE spCountry_DateRange
+@StartDate date,
+@EndDate date
+AS
+BEGIN
+-- SQL for search looking range of dates
+SELECT CountryName, CountryISO FROM Country WHERE 
+END
+
+--------------  Stored Proc for UPDATE
+CREATE PROCEDURE spCountry_Update
+-- Parameters for Update stored procedure.
+@CountryID bigint,
+@CountryName bigint,
+@CountryISO bigint
+AS
+BEGIN
+-- SQL for Update stored procedure
+UPDATE Country SET CountryName = @CountryName, CountryISO = @CountryISO WHERE CountryID = @CountryID
+END
+
+--------------  Stored Proc for DELETE
+CREATE PROCEDURE spCountry_Delete
+-- One parameter required to identify row to delete.
+@CountryID int
+AS
+BEGIN
+-- SQL for Delete stored procedure (physically deletes, you may want to change this to mark inactive)
+DELETE FROM Country WHERE CountryID = @CountryID
+END
+
+
+========================================================
+Back in Visual Studio, you need to add some classes
+and an interface to the Data folder, with the 
+names shown below.
+
+
+You should have three classes, per database table, in the Data folder.
+
+---------------------------- /DATA/Country.cs
+using System;
+using System.ComponentModel.DataAnnotations;
+// This is the model for one row in the database table. You may need to make some adjustments.
+namespace Export.Data
+{
+    public class Country
+    {
+	[Required]
+public int CountryID { get; set; }
+[Required]
+public int CountryName { get; set; }
+[Required]
+public int CountryISO { get; set; }
+
+    }
+}
+
+---------------------------- /DATA/CountryService.cs
+// This is the service for the Country class.
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Threading.Tasks;
+
+namespace Export.Data
+{
+    public class CountryService : ICountryService
+    {
+        // Database connection
+        private readonly SqlConnectionConfiguration _configuration;
+        public CountryService(SqlConnectionConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        // Add (create) a Country table row (SQL Insert)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> CountryInsert(Country country)
+        {
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                var parameters = new DynamicParameters();
+			parameters.Add("CountryName", country.CountryName, DbType.Int64);
+parameters.Add("CountryISO", country.CountryISO, DbType.Int64);
+
+                // Stored procedure method
+                await conn.ExecuteAsync("spCountry_Insert", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }     
+        // Get a list of country rows (SQL Select)
+        // This only works if you're already created the stored procedure.
+        public async Task<IEnumerable<Country>> CountryList()
+        {
+            IEnumerable<Country> countries;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                countries = await conn.QueryAsync<Country>("spCountry_List", commandType: CommandType.StoredProcedure);
+            }
+            return countries;
+        }
+      	//Search for data (very generic...you may need to adjust.
+        public async Task<IEnumerable<Country>> CountrySearch(string @Param)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@Param", Param, DbType.String);
+            IEnumerable<Country> countries;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                countries = await conn.QueryAsync<Country>("spCountry_Search", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return countries;
+        }
+        // Search based on date range. Code generator makes wild guess, you 
+        // will likely need to adjust field names
+        public async Task<IEnumerable<Country>> CountryDateRange(DateTime @StartDate, DateTime @EndDate)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@StartDate", StartDate, DbType.Date);
+            parameters.Add("@EndDate", EndDate, DbType.Date);
+            IEnumerable<Country>  countries;
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                countries = await conn.QueryAsync<Country>("spCountry_DateRange", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return countries;
+        }
+
+        // Get one country based on its CountryID (SQL Select)
+        // This only works if you're already created the stored procedure.
+        public async Task<Country> Country_GetOne(int @CountryID)
+        {
+            Country country = new Country();
+            var parameters = new DynamicParameters();
+            parameters.Add("@CountryID", CountryID, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                country = await conn.QueryFirstOrDefaultAsync<Country>("spCountry_GetOne",parameters,commandType: CommandType.StoredProcedure);
+            }
+            return country;
+        }
+        // Update one Country row based on its CountryID (SQL Update)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> CountryUpdate(Country country)
+        {
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("CountryID", country.CountryID, DbType.Int64);
+
+			    parameters.Add("CountryName", country.CountryName, DbType.Int64);
+parameters.Add("CountryISO", country.CountryISO, DbType.Int64);
+
+                await conn.ExecuteAsync("spCountry_Update", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }
+
+        // Physically delete one Country row based on its CountryID (SQL Delete)
+        // This only works if you're already created the stored procedure.
+        public async Task<bool> CountryDelete(int CountryID)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@CountryID", CountryID, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                await conn.ExecuteAsync("spCountry_Delete",parameters, commandType: CommandType.StoredProcedure);
+            }
+            return true;
+        }
+    }
+}
+
+---------------------------- /Data/ICountryService.cs
+// This is the Country Interface
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Export.Data
+{
+    // Each item below provides an interface to a method in CountryServices.cs
+    public interface ICountryService
+    {
+        Task<bool> CountryInsert(Country country);
+        Task<IEnumerable<Country>> CountryList();
+        Task<IEnumerable<Country>> CountrySearch(string Param);
+        Task<IEnumerable<Country>> CountryDateRange(DateTime @StartDate, DateTime @EndDate);
+        Task<Country> Country_GetOne(int CountryID);
+        Task<bool> CountryUpdate(Country country);
+        Task<bool> CountryDelete(int CountryID);
+    }
+}
+=======================================================
+= With the classes finished, open up Startup.cs and 
+= add the services.AddScoprf linr below to the 
+=  public void ConfigureService{} block, perhaps just
+=  above the comment and code that defines SqlConnectionConfiguration
+========================================================
+
+services.AddScoped<ICountryService, CountryService>();
+
+
+=========================================================
+= Next comes the pages. Each goes in the Pages folder
+= and each should be defined as a Razor Component.                                             
+=========================================================
+
+---------------------------- /PAGES/CountryAddEdit.razor
+@using Export.Data
+@page "/countryaddedit/{CountryID:int}"
+@inject ICountryService CountryService
+@inject NavigationManager NavigationManager
+
+<h1 style="text-align:center">@pagetitle</h1>
+<EditForm Model="@country" OnValidSubmit="@CountrySave" class="form-inline">
+<div class="container">
+        <!-- You may want to change some type="" choices to better suit your own data -->
+        <div class='row'>
+<div class='col-2'>
+<label for = 'CountryName'>CountryName:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "country.CountryName" class='form-control' id = 'CountryName'/></div>
+<div class='col-2'>
+<label for = 'CountryISO'>CountryISO:</label>
+</div>
+<div class='col-4'>
+<InputNumber @bind-Value = "country.CountryISO" class='form-control' id = 'CountryISO'/></div>
+</div>
+
+
+<div class="row">
+<div class="col-12 errormsg">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+</div>
+</div>
+<div class="row">
+<div class="col-12 buttons">
+<button class="btn btn-primary">@buttontext</button>
+<button class="btn btn-secondary" @onclick="@Cancel">Cancel</button>
+</div>
+</div>
+</div>
+</EditForm>
+
+@code {
+   // Create a new, empty Country object
+   Country country = new Country();
+
+    [Parameter]
+    public int CountryID { get; set; }
+
+    // Set default page title and button text
+    public string pagetitle = "Add a Country";
+    public string buttontext = "Add";
+
+    //Executes on page open, set defaults on page.
+    protected override async Task OnInitializedAsync()
+    {
+        // ============ If the passed-in CountryID is zero, assume new Country.
+        if (CountryID == 0)
+        {
+            // Use this block to set for defaults (optional)
+        }
+        else
+        {
+            country = await CountryService.Country_GetOne(CountryID);
+            // Change page title and button text since this is an edit.
+            pagetitle = "Edit Country";
+            buttontext = "Update";
+        }
+    }
+    // Executes OnValidSubmit of EditForm above.
+    protected async Task CountrySave()
+    {
+        if (country.CountryID == 0)
+        {
+            // Insert if CountryID is zero.
+            await CountryService.CountryInsert(country);
+        }
+        else
+        {
+            // Update if CountryID not 0
+            await CountryService.CountryUpdate(country);
+        }
+        NavigationManager.NavigateTo("/countrylist");
+    }
+    //Executes if user clicks the Cancel button.
+    protected void Cancel()
+    {
+        NavigationManager.NavigateTo("/countrylist");
+    }
+}
+
+---------------------------- /PAGES/CountryList.razor
+@using Export.Data
+@page "/countrylist"
+@inject ICountryService CountryService
+
+<h1 style="text-align:center">Country List</h1>
+<table id="search-add">
+<tr>
+<td>
+    <!-- Calling countryaddedit with CountryID of zero configures page for Insert -->
+    <a href="/countryaddedit/0"><span class="oi oi-plus"></span>Add a Country</a>
+    </td>
+    <td>
+    <span class="oi oi-magnifying-glass" style="color:blue;"></span>
+    <input id="tbSearch" @bind-value="@SearchTerm"  @bind-value:event="oninput" @onkeyup="SearchKeyPress" />
+    &nbsp;<button @onclick="@Search" class="btn btn-primary">Search</button>
+    </td>
+    </tr>
+
+</table>
+<div id="list" style="display:@Listdisplay">
+@if (countries == null)
+{
+    <p style="text-align:center">
+        <img src="../images/loader.gif" />
+    </p>
+}
+else
+{
+    <table class="genlist">
+        <tr>
+                <!-- Indicates what rows below are showing -->
+                <td colspan="7" style="text-align:left;font-weight:bold;font-size:120%">@Nowshowing</td>
+            </tr>
+        <tr>
+            <th>Edit</th>
+		<th>CountryName</th><th>CountryISO</th>
+            <th>Delete</th>
+        </tr>
+        @foreach (var country in countries)
+        {
+    <tr>
+        <td>
+            <!-- Calling countryaddedit with CountryID configures page for Update of that table row -->
+            <a href="countryaddedit/@country.CountryID">
+                <span class="oi oi-pencil" style="color:blue;"></span>
+                <!-- If you prefer images, comment below and put images in wwwroot/images folder 
+                <img src="../images/iEdit.png" />-->
+            </a>
+        </td>
+		<td>@country.CountryName</td><td>@country.CountryISO</td>
+        <!-- If you want to use a checkmark for a IsActive field, here's the basic code  -->
+        <!-- You have to uncomment and get the field name right -->
+        <!-- <td> -->
+            <!-- Provide your own images in wwwroot/images folder -->
+       <!--     @*Show a green check for active country...*@ -->
+       <!--     @if (country.IsActive) -->
+       <!--     { -->
+       <!--     <span class="oi oi-check" style="color:green;"></span> -->
+            <!-- If you prefer images, comment below and put images in wwwroot/images folder 
+       <!--         <img src="../images/iGreenCheck.png" /> -->
+       <!--     } -->
+       <!--     @* ...a red X otherwise *@ -->
+       <!--     else -->
+       <!--     { -->
+       <!--    <span class="oi oi-x" style="color:red;"></span> -->
+       <!--      If you prefer images, comment below and put images in wwwroot/images folder -->
+       <!--         <img src="../images/iRedX.png" />-->
+       <!--     }-->
+       <!-- </td>-->
+        @* This column for deletes *@
+        
+        <td>
+            <a href="countrydelete/@country.CountryID">
+            <span class="oi oi-trash" style="color:red;"></span>
+            <!-- If you prefer images, uncomment the img tag and put images in wwwroot/images
+                <img src="../images/iTrash.png" alt="Delete" title="Delete" /> -->
+            </a>
+        </td>
+    </tr>
+        }
+    </table>
+}
+</div>
+<!-- Error message for to few or to many in search results -->
+<div class="error" style="display:@Errordisplay">
+    <h2>@SearchError</h2>
+</div>
+
+@code {
+    //Variable used for searching (tbSearch)
+    public string SearchTerm { get; set; }
+    public string SearchError = "";
+    public string Listdisplay = "block";
+    public string Errordisplay = "none";
+    public string Nowshowing = "Recent Entries";
+    // Create an empty list, named countries, of empty Country objects.
+    IEnumerable<Country> countries;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        //Populate the list of country objects from the Country table.
+        countries = await CountryService.CountryList();
+    }
+    
+    //Make pressing ENTER in the search box the same as clicking the Search button.
+    private void SearchKeyPress(KeyboardEventArgs ev)
+    {
+        if (ev.Key == "Enter")
+        {
+            //System.Diagnostics.Debug.WriteLine(ev.Key);
+            Search();
+        }
+    }
+    
+    //Do the search
+    private async void Search()
+    {
+    //Forces the progress indicator to show while searching.
+    if (SearchTerm.Length > 0 ) {
+        countries = null;
+        Nowshowing = "Contains: " + SearchTerm;
+        StateHasChanged();
+        //Does the search and stores result in countries collection.
+        countries  = await CountryService.CountrySearch(SearchTerm);
+        var howmany = countries.Count();
+        // Show results or error depending on how many found.
+          switch (howmany)
+          {
+            case int n when (n < 1):
+                errorMessage("Not found, please try another search");
+                break;
+            case int n when (n > 250):
+                errorMessage("More than 250 results, please try a different search.");
+                break;
+            default:
+                //Show the search results and count.
+                Nowshowing += " (" + howmany + ")";
+                errorMessage("");
+                StateHasChanged();
+                break;
+          } 
+        } else {
+            //If no search term, just do the default list.
+            Nowshowing = "Recent entries";
+            countries = await CountryService.CountryList();
+            StateHasChanged();
+        }
+
+        //Show or hide the search results error message.
+        void errorMessage(string msgText)
+        {
+            if (msgText.Length > 0)
+            {
+                Listdisplay = "none";
+                Errordisplay = "block";
+                SearchError = msgText;
+            }
+            else
+            {
+                Listdisplay = "block";
+                Errordisplay = "none";
+                SearchError = "";
+            }
+            //Re-render the page.
+            StateHasChanged();
+        }
+        //System.Diagnostics.Debug.WriteLine(howmany);
+    }
+}
+
+
+---------------------------- /Pages/CountryReport.razor
+@using Export.Data
+@page "/countryreport"
+@inject ICountryService CountryService
+@inject NavigationManager NavigationManager
+
+  <div id="date-search-tools">
+        <div id="GetDates" style="display:@ToolsVisible">
+        <h1 style="text-align:center">Country Report</h1>
+            <table>
+                <tr>
+                    <td>
+                        Start Date: <input type="date" id="tbStartDate" @bind-value="@StartDate" />
+                    </td>
+                    <td>
+                        End Date: <input type="date" id="tbEndtDate" @bind-value="@EndDate" @bind-value:event="oninput" @onkeyup="SearchKeyPress" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align:center;">
+                        &nbsp;<button @onclick="@Search" class="btn btn-primary">Search</button>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
+    <div id="list" style="display:@ReportVisible">
+      <table id="search-buttons">
+            <tr>
+                <td><button class="btn btn-primary" onclick="window.print()">Print or PDF</button></td>
+                <td><button class="btn btn-secondary" onclick="location.href='countryreport'">Cancel</button>
+                </td>
+            </tr>
+        </table>
+    <h1 style="text-align:center">Country Report</h1>
+    <p style="text-align:center;">From @StartDate.ToShortDateString() to @EndDate.ToShortDateString()</p>
+        <table class="genlist">
+            <thead>
+                <tr>
+              		<th>CountryName</th><th>CountryISO</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (countries != null)
+                {
+                    @foreach (var country in countries)
+                    {
+                    <tr>
+	                   	<td>@country.CountryName</td><td>@country.CountryISO</td>
+                    </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        <table id="search-buttons">
+            <tr>
+                <td><button class="btn btn-primary" onclick="window.print()">Print or PDF</button></td>
+                <td><button class="btn btn-secondary" onclick="location.href='countryreport'">Cancel</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+       <!-- Error message for to few or to many in search results -->
+    <div class="error" style="display:@Errordisplay">
+        <h1>@SearchError</h1>
+    </div>
+   
+   @code {
+        //Variables used for searching
+        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateTime EndDate { get; set; } = DateTime.Today;
+        public string SearchError = "";
+        public string ToolsVisible = "block";
+        public string ReportVisible = "none";
+        public string Errordisplay = "none";
+
+        // Create an empty list, named videos, of empty Video objects.
+        IEnumerable<Country> countries;
+
+        protected override void OnInitialized()
+        {
+            @if (countries == null)
+            {
+                ShowReport(false);
+            }
+            else
+            {
+                ShowReport(true);
+            }
+            StateHasChanged();
+        }
+
+        //Make pressing ENTER in the search box the same as clicking the Search button.
+        private void SearchKeyPress(KeyboardEventArgs ev)
+        {
+            if (ev.Key == "Enter")
+            {
+                //System.Diagnostics.Debug.WriteLine(ev.Key);
+                Search();
+            }
+        }
+        private void ShowReport(bool ShowRep)
+        {
+            if (ShowRep)
+            {
+                ToolsVisible = "none";
+                ReportVisible = "block";
+            }
+            else
+            {
+                ToolsVisible = "block";
+                ReportVisible = "none";
+            }
+        }
+
+        //Do the search
+        private async void Search()
+        {
+            countries = null;
+            StateHasChanged();
+            //Does the search and stores result in collection.
+            countries = await CountryService.CountryDateRange(StartDate, EndDate);
+            var howmany = countries.Count();
+            // Show results or error depending on how many found.
+            if (howmany < 1 ) {
+               errorMessage("Not found, try another search");
+            } else {
+               errorMessage("");
+            }
+            StateHasChanged();
+
+            ////Show or hide the search results error message.
+            void errorMessage(string msgText)
+            {
+                if (msgText.Length > 0)
+                {
+                    ShowReport(false);
+                    Errordisplay = "block";
+                    SearchError = msgText;
+                } else  {
+                    ShowReport(true);
+                    Errordisplay = "none";
+                    SearchError = "";
+                }
+                //Re-render the page.
+                StateHasChanged();
+            }
+
+            //System.Diagnostics.Debug.WriteLine(howmany);
+        }
+    }
+
+
+---------------------------- /Pages/CountryDelete.razor
+@using Export.Data
+@page "/countrydelete/{CountryID:int}"
+@inject ICountryService CountryService
+@inject NavigationManager NavigationManager
+
+
+<h1 style="text-align:center">Delete a Country</h1>
+<p style="color:red;text-align:center">Are you sure you want to permanently delete this country? There is no undo!</p>
+
+<table class="genform">
+	<div class='form-group'>CountryName:@country.CountryName</div>
+<div class='form-group'>CountryISO:@country.CountryISO</div>
+
+    <tr>
+        <td colspan="2" style="text-align:center">
+            <button class="btn btn-primary" @onclick="@Delete">Delete</button>
+            <button class="btn btn-secondary" @onclick="@Cancel">Cancel</button>
+        </td>
+    </tr>
+</table>
+
+@code {
+    // Create a new, empty Country object
+    Country country = new Country();
+
+    [Parameter]
+    public int CountryID { get; set; }
+
+    //Executes on page open..
+    protected override async Task OnInitializedAsync()
+    {
+        country = await CountryService.Country_GetOne(CountryID);
+    }
+    //Executes if user confirms the deletion.
+    protected async Task Delete()
+    {
+        // Delete the row and go back to the list. 
+        // In the SProc you can set IsActive to 0 rather than physically delete.
+        await CountryService.CountryDelete(CountryID);
+        NavigationManager.NavigateTo("/countrylist");
+    }
+    // Executes when user clicks the Cancel button.
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/countrylist");
+    }
+}
+
+=========================================================
+=Link to the page that lists items, which should have links 
+= for adding editing and deleting. I made it match the code
+= in NavMenu.cs but of course you can style links 
+= however you like.
+=========================================================
+<li class="nav-item px-3">
+   <NavLink class="nav-link" href="countrylist" Match="NavLinkMatch.All">
+      <span class="oi" aria-hidden="true"></span>Country
+   </NavLink>
+</li>
+
+==========================================================================
+= If you need to use this table for a dropdown list control, here is 
+= some code to help, but you;ll have to flesh-out the details on your own
+==========================================================================
+------------------------- Stored Procedure for dropdown.
+CREATE PROCEDURE [dbo].[spCountry_GetDropdown]
+        @IncludeNumber int
+        AS
+        BEGIN
+		-- You'll have to provide your own field names, and maybe change IsActive if you don't have that field
+        SELECT        YOUR_BOUND_FIELD, YOU_DROPDOWN-VISIBLE_FIELD
+        FROM            Country
+        WHERE IsActive = 1  OR CountryID = @IncludeNumber
+        ORDER BY YOUR_ORDER_BY_FIELD 
+END
+
+---------------------------- For the Service Class.
+public async Task<IEnumerable<Country>> Country_GetDropdown(int @IncludeNumber)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@IncludeNumber", IncludeNumber, DbType.Int32);
+
+        IEnumerable<Country> countries;
+        using (var conn = new SqlConnection(_configuration.Value))
+            {
+                countries; = await conn.QueryAsync<Country>("spCountry_GetDropdown", parameters, commandType: CommandType.StoredProcedure);
+            }
+        return countries;
+    }
+
+---------------------------- For the Iservice Class.
+Task<IEnumerable<Country>> Country_GetDropdown(int @IncludeNumber);
+
+---------------------------- For the top of AddEdit page.
+@inject ICountryService CountryService
+
+---------------------------- Near the top of the @Code{} section.
+//For the dropdown
+Country country = new Country();
+IEnumerable<Country> countries;
+
+
+------------------------- Code to populate dropdown for new INSERT rows (in OnInitAsync when Row ID is zero):
+//Populate the dropdown, no inActive items required on new entry 
+countries = await CountryService.Country_GetDropdown(0);
+
+------------------------ Code to populate dropdown for new UPDATE rows (in OnInitAsync when Row ID is NOT zero):
+//When doing an update, include the id of the current item in case
+//it's been marked inactive since initally applied.
+MAINPAGE x = new MAINPAGE();
+x = await MAINPAGESERVICE.MAINPAGE_GetOne(ID OF ITEM ON MAIN PAGE);
+//Need to include this row's selected item in the dropdown, even it it's no longer active.
+countries = await CountryService.Country_GetOne(KEY_OF_AddEdit_PAGE_ROW);
+
+------------------------ The actual select control on the AddEdit page where user makes their choice.
+<InputSelect @bind-Value="MAINPAGE.KEYVALUE" class='form-control' id='KEYVALUE'>
+    @if (objectlist != null)
+    {
+        @foreach (var country in countries)
+            {
+                <option value="country.KEYVALUE">country.FIELD_THAT_SHOWS_IN_DROPDOWN</option>
+            }
+    }
+</InputSelect>
+			
+===========================================================================
+= End of optional Dropdown List code
+===========================================================================
+
+
+
+===========================================================
+= You can put this CSS code on wwwroot/css/site.css if    =
+= you want some rudimentary styling for the generated html=
+===========================================================
+
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    height: 40px;
+    width: 100%;
+    background-color: #82C7FF;
+    padding-right: 10px;
+    z-index: 100;
+}
+
+    header img {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        height: 48px;
+        z-index: 3200;
+    }
+
+    header h1 {
+        margin-left: 48px;
+        color: white;
+        font-size: 18pt;
+        line-height: 40px;
+        text-shadow: 1px 1px 0px rgba(0,0,0,.9);
+        padding: 2px 0 0 8px;
+    }
+
+    header div {
+        position: absolute;
+        top: 0;
+        right: 10px;
+        width: 60%;
+        line-height: 40px;
+    }
+
+aside {
+    position: fixed;
+    left: 0;
+    top: 40px;
+    width: 200px;
+    height: 100vh;
+    background-color: #82C7FF;
+    padding-top: 30px;
+}
+
+    aside a {
+        display: block;
+        width: 80%;
+        margin: 2em auto;
+        padding: 6px 3px;
+        border: solid 1px rgba(255,255,255,.8);
+        text-decoration: none;
+        border-radius: 4px;
+        background-color: rgba(255,255,255,.6);
+        text-align: center;
+        color: black;
+        font-size: 85%;
+    }
+
+        aside a:hover {
+            text-decoration: none;
+            color: lightseagreen;
+            border: solid 1px rgba(255,255,255,.6);
+            background-color: rgba(255,255,255,.8);
+        }
+
+main {
+    margin: 40px 16px 0 210px;
+    padding: 8px;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255,255,255,.7);
+    font-size: 80%;
+    text-align: center;
+    color: darkgrey;
+}
+
+#homepage {
+    text-align: center;
+}
+
+
+/* From Blazor/Dapper code generator */
+
+table.genlist {
+    border-collapse: collapse;
+    margin: 1em auto;
+}
+
+/* Generated list */
+
+.genlist tr:nth-child(odd) {
+    background-color: Aliceblue;
+}
+
+.genlist tr:hover {
+    background-color: lightyellow;
+}
+
+.genlist th, .genlist td {
+    border: solid 1px silver;
+    padding: 2px 4px;
+    font-size: 90%;
+    font-family: 'Arial Narrow', Arial, sans-serif
+}
+
+    .genlist td:first-child,
+    .genlist td:last-child {
+        text-align: center;
+    }
+
+.genlist td {
+    max-width: 400px;
+}
+
+.genlist th,
+.genlist td {
+    padding: 2px 4px;
+}
+
+.container {
+    border: dotted pink 1px;
+}
+
+    .container .col-2,
+    .container .col-4,
+    .container .col-12 {
+        border: dotted yellow 1px;
+    }
+/* CSS for generated forms */
+.genform input.form-control {
+    height: auto !important;
+    padding: 2px 4px !important;
+}
+
+.genform select.form-control {
+    height: auto !important;
+    padding: 4px !important;
+    margin-bottom: 4px;
+}
+
+.genform input[type="date"].form-control,
+.genform input[type="number"].form-control {
+    height: auto !important;
+    padding: 2px 4px !important;
+    width: 200px;
+    display: inline;
+}
+
+.genform input[type="checkbox"] {
+    /*    width: 20px;
+    height: 20px;*/
+}
+
+.genform input:read-only {
+    border: none;
+    background-color: transparent;
+    color: darkgray;
+}
+
+    .genform input:read-only:focus,
+    .genform input:read-only valid {
+        border: none;
+    }
+
+.genform input[type="checkbox"].form-control {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.genform input[type="checkbox"] + label {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+}
+
+
+/* Labels for controls  */
+.lbl {
+    text-align: right;
+    font-weight: bold;
+}
+
+
+.buttons {
+    padding: 10px 0;
+    text-align: center;
+}
+
+
+.errormsg {
+    text-align: center;
+    color: red;
+}
+
+/* Table that holds the Add and Search options for ...List pages. */
+table#search-add {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+    table#search-add td {
+        min-width: 400px;
+    }
+
+        table#search-add td:nth-child(1) {
+            text-align: left;
+        }
+
+        table#search-add td:nth-child(2) {
+            text-align: right;
+        }
+
+        table#search-add td input {
+            border-radius: 4px;
+            border: solid 1px silver;
+        }
+
+/* Controls that let people search by date range */
+#date-search-tools table {
+    margin: 1em auto;
+    border-collapse: collapse;
+}
+
+    #date-search-tools table td {
+        border: solid 1px silver;
+        padding: 6px 4px;
+    }
+
+        #date-search-tools table td input {
+            width: 140px;
+        }
+
+#search-buttons {
+    margin: 1em auto;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.strikethrough {
+    text-decoration: line-through;
+    text-decoration-color: red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+/* Boostrap overrides */
+/*@media (min-width: 576px) {
+    .form-inline .form-control {
+        width: 100% !important;
+    }
+}*/
+
+=========================================================
+= If you want to use my images, copy the images folder  =
+= from the wwwroot in BlazorDapperGen to the wwwroot    =
+= folder in your own project.                           =
+=========================================================
+===============================================================================
+End of generated code.
+===============================================================================
