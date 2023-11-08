@@ -15,16 +15,17 @@ namespace Export.Data {
         }
         // Add (create) a Aduanas table row (SQL Insert)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> AduanasInsert(Aduanas aduanas) {
+        public async Task<int> AduanasInsert(string nombreAduana, string abreviacionAduana) {
+            int Success = 0;
+            var parameters = new DynamicParameters();
+            parameters.Add("nombreAduana", nombreAduana, DbType.String);
+            parameters.Add("abreviacionAduana", abreviacionAduana, DbType.String);
+            parameters.Add("@ReturnValue", dbType: DbType.Int32, direction:ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("NombreAduana", aduanas.NombreAduana, DbType.Int64);
-                parameters.Add("AbreviacionAduana", aduanas.AbreviacionAduana, DbType.Int64);
-
-                // Stored procedure method
-                await conn.ExecuteAsync("spAduanas_Insert", parameters, commandType: CommandType.StoredProcedure);
+                await conn.ExecuteAsync("spAduanas_Insert", parameters, commandType:CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
         // Get a list of aduanas rows (SQL Select)
         // This only works if you're already created the stored procedure.
@@ -49,17 +50,18 @@ namespace Export.Data {
         }
         // Update one Aduanas row based on its AduanasID (SQL Update)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> AduanasUpdate(Aduanas aduanas) {
+        public async Task<int> AduanasUpdate(string nombreAduana, string abreviacionAduana, int aduanaID) {
+            int Success = 0;
+            var parameters = new DynamicParameters();
+            parameters.Add("nombreAduana", nombreAduana, DbType.String);
+            parameters.Add("abreviacionAduana", abreviacionAduana, DbType.String);
+            parameters.Add("aduanasID", aduanaID, DbType.Int32);
+            parameters.Add("@ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("AduanasID", aduanas.AduanasID, DbType.Int64);
-
-                parameters.Add("NombreAduana", aduanas.NombreAduana, DbType.Int64);
-                parameters.Add("AbreviacionAduana", aduanas.AbreviacionAduana, DbType.Int64);
-
                 await conn.ExecuteAsync("spAduanas_Update", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
     }
 }

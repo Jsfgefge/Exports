@@ -1,6 +1,7 @@
 ﻿// This is the service for the Cargador class.
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,15 +16,16 @@ namespace Export.Data {
         }
         // Add (create) a Cargador table row (SQL Insert)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> CargadorInsert(Cargador cargador) {
+        public async Task<int> CargadorInsert(string descripcion) {
+            int Success = 0;
+            var parameters = new DynamicParameters();
+            parameters.Add("descripcion", descripcion, DbType.String);
+            parameters.Add("@ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("Descripcion", cargador.Descripcion, DbType.String);
-
-                // Stored procedure method
                 await conn.ExecuteAsync("spCargador_Insert", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
         // Get a list of cargador rows (SQL Select)
         // This only works if you're already created the stored procedure.
@@ -34,29 +36,6 @@ namespace Export.Data {
             }
             return cargadors;
         }
-        //Search for data (very generic...you may need to adjust.
-        public async Task<IEnumerable<Cargador>> CargadorSearch(string @Param) {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Param", Param, DbType.String);
-            IEnumerable<Cargador> cargadors;
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                cargadors = await conn.QueryAsync<Cargador>("spCargador_Search", parameters, commandType: CommandType.StoredProcedure);
-            }
-            return cargadors;
-        }
-        // Search based on date range. Code generator makes wild guess, you 
-        // will likely need to adjust field names
-        public async Task<IEnumerable<Cargador>> CargadorDateRange(DateTime @StartDate, DateTime @EndDate) {
-            var parameters = new DynamicParameters();
-            parameters.Add("@StartDate", StartDate, DbType.Date);
-            parameters.Add("@EndDate", EndDate, DbType.Date);
-            IEnumerable<Cargador> cargadors;
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                cargadors = await conn.QueryAsync<Cargador>("spCargador_DateRange", parameters, commandType: CommandType.StoredProcedure);
-            }
-            return cargadors;
-        }
-
         // Get one cargador based on its CargadorID (SQL Select)
         // This only works if you're already created the stored procedure.
         public async Task<Cargador> Cargador_GetOne(int @CargadorID) {
@@ -70,27 +49,18 @@ namespace Export.Data {
         }
         // Update one Cargador row based on its CargadorID (SQL Update)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> CargadorUpdate(Cargador cargador) {
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("CargadorID", cargador.CargadorID, DbType.Int64);
-
-                parameters.Add("Descripcion", cargador.Descripcion, DbType.String);
-
-                await conn.ExecuteAsync("spCargador_Update", parameters, commandType: CommandType.StoredProcedure);
-            }
-            return true;
-        }
-
-        // Physically delete one Cargador row based on its CargadorID (SQL Delete)
-        // This only works if you're already created the stored procedure.
-        public async Task<bool> CargadorDelete(int CargadorID) {
+        public async Task<int> CargadorUpdate(string descripcion, int cargadorID) {
+            int Success = 0;
             var parameters = new DynamicParameters();
-            parameters.Add("@CargadorID", CargadorID, DbType.Int32);
+            parameters.Add("descripcion", descripcion, DbType.String);
+            parameters.Add("cargadorID", cargadorID, DbType.Int32);
+            parameters.Add("@ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                await conn.ExecuteAsync("spCargador_Delete", parameters, commandType: CommandType.StoredProcedure);
+                await conn.ExecuteAsync("spCargador_Update", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
+
     }
 }

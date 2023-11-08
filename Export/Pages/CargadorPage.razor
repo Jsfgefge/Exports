@@ -1,0 +1,57 @@
+﻿@page "/cargador"
+@using Export.Data
+@using Syncfusion.Blazor.Navigations
+
+
+<h3>cargador</h3>
+@* HACE FALTA PONER DATAVALIDATION, AUNQUE YA QUE SOLO EL DEVELOPER VA A ACCEDER A ESTO PUEDE QUE DE IGUAL *@
+<SfGrid DataSource="@cargador"
+        Toolbar="@Toolbaritems"
+        Width="500px"
+        AllowPaging="true"
+        ContextMenuItems="@(new List<object>(){"SortAscending","SortDescending","FirstPage", "PrevPage","LastPage", "NextPage" })">
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridColumns>
+        <GridColumn Field="@nameof(Cargador.CargadorID)"
+                    HeaderText="ID"
+                    TextAlign="TextAlign.Right"
+                    Width="20">
+        </GridColumn>
+        <GridColumn Field="@nameof(Cargador.Descripcion)"
+                    HeaderText="Consignatario"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+    </GridColumns>
+    <GridEvents OnToolbarClick="ToolbarClickHandler" RowSelected="RowSelectHandler" TValue="Cargador">
+    </GridEvents>
+</SfGrid>
+
+<SfDialog @ref="DialogAddEditCargador"
+          IsModal="true"
+          Width="500px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>@HeaderText</Header>
+    </DialogTemplates>
+    <EditForm Model="addeditCargador">
+        <div>
+            <SfTextBox @ref="txtCargador" Enabled="true" Placeholder="Nombre Consignatario" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditCargador.Descripcion">
+            </SfTextBox>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@CargadorSave">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
+
+@code {
+
+}

@@ -6,9 +6,9 @@ namespace Export.Data {
         [Required]
         public int AduanasID { get; set; }
         [Required]
-        public int NombreAduana { get; set; }
+        public string NombreAduana { get; set; }
         [Required]
-        public int AbreviacionAduana { get; set; }
+        public string AbreviacionAduana { get; set; }
 
     }
 }

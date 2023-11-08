@@ -1,0 +1,64 @@
+﻿@page "/aduanas"
+@using Export.Data;
+@using Syncfusion.Blazor.Navigations;
+<h3>Aduanas</h3>
+
+@* HACE FALTA PONER DATAVALIDATION, AUNQUE YA QUE SOLO EL DEVELOPER VA A ACCEDER A ESTO PUEDE QUE DE IGUAL *@
+<SfGrid DataSource="@aduana"
+        Toolbar="@Toolbaritems"
+        Width="500px"
+        AllowPaging="true"
+        ContextMenuItems="@(new List<object>(){"SortAscending","SortDescending","FirstPage", "PrevPage","LastPage", "NextPage" })">
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridColumns>
+        <GridColumn Field="@nameof(Aduanas.AduanasID)"
+                    HeaderText="ID"
+                    TextAlign="TextAlign.Right"
+                    Width="20">
+        </GridColumn>
+        <GridColumn Field="@nameof(Aduanas.NombreAduana)"
+                    HeaderText="Aduana"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+        <GridColumn Field="@nameof(Aduanas.AbreviacionAduana)"
+                    HeaderText="Abreviacion"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+    </GridColumns>
+    <GridEvents OnToolbarClick="ToolbarClickHandler" RowSelected="RowSelectHandler" TValue="Aduanas">
+    </GridEvents>
+</SfGrid>
+
+<SfDialog @ref="DialogAddEditAduana"
+          IsModal="true"
+          Width="500px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>@HeaderText</Header>
+    </DialogTemplates>
+    <EditForm Model="addeditAduana">
+        <div>
+            <SfTextBox @ref="txtAduana" Enabled="true" Placeholder="Nombre Aduana" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditAduana.NombreAduana">
+            </SfTextBox>
+            <SfTextBox Enabled="true" Placeholder="Abreviacion" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditAduana.AbreviacionAduana">
+            </SfTextBox>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@AduanaSave">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
+
+@code {
+
+}
+
