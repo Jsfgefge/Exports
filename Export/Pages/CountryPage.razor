@@ -4,7 +4,7 @@
 
 
 <h3>Country</h3>
-
+@* HACE FALTA PONER DATAVALIDATION, AUNQUE YA QUE SOLO EL DEVELOPER VA A ACCEDER A ESTO PUEDE QUE DE IGUAL *@
 <SfGrid DataSource="@country"
         Toolbar="@Toolbaritems" 
         Width="500px"
@@ -40,9 +40,9 @@
     <DialogTemplates>
         <Header>@HeaderText</Header>
     </DialogTemplates>
-    <EditForm Model="addeditCountry" OnValidSubmit="@CountrySave">
+    <EditForm Model="addeditCountry">
         <div>
-            <SfTextBox Enabled="true" Placeholder="Country Name" FloatLabelType="@FloatLabelType.Always" @bind-Value="addeditCountry.CountryName">
+            <SfTextBox @ref="txt_countryName" Enabled="true" Placeholder="Country Name" FloatLabelType="@FloatLabelType.Always" @bind-Value="addeditCountry.CountryName">
             </SfTextBox>
             <SfTextBox Enabled="true" Placeholder="Country ISO" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditCountry.CountryISO">
             </SfTextBox>
@@ -51,7 +51,7 @@
         <div class="e-footer-content">
             <div class="button-container">
                 <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
-                <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@CountrySave">Save</button>
             </div>
         </div>
     </EditForm>

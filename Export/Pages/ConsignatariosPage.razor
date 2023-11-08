@@ -1,4 +1,56 @@
-﻿<h3>ConsignatariosPage</h3>
+﻿@page "/consignatarios"
+@using Export.Data
+@using Syncfusion.Blazor.Navigations
+
+
+<h3>Consignatarios</h3>
+@* HACE FALTA PONER DATAVALIDATION, AUNQUE YA QUE SOLO EL DEVELOPER VA A ACCEDER A ESTO PUEDE QUE DE IGUAL *@
+<SfGrid DataSource="@consignatario"
+        Toolbar="@Toolbaritems"
+        Width="500px"
+        AllowPaging="true"
+        ContextMenuItems="@(new List<object>(){"SortAscending","SortDescending","FirstPage", "PrevPage","LastPage", "NextPage" })">
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridColumns>
+        <GridColumn Field="@nameof(Consignatarios.ConsignatarioID)"
+                    HeaderText="ID"
+                    TextAlign="TextAlign.Right"
+                    Width="20">
+        </GridColumn>
+        <GridColumn Field="@nameof(Consignatarios.NombreConsignatario)"
+                    HeaderText="Consignatario"
+                    TextAlign="TextAlign.Left"
+                    Width="40">
+        </GridColumn>
+    </GridColumns>
+    <GridEvents OnToolbarClick="ToolbarClickHandler" RowSelected="RowSelectHandler" TValue="Consignatarios">
+    </GridEvents>
+</SfGrid>
+
+<SfDialog @ref="DialogAddEditConsignatario"
+          IsModal="true"
+          Width="500px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>@HeaderText</Header>
+    </DialogTemplates>
+    <EditForm Model="addeditConsignatario">
+        <div>
+            <SfTextBox @ref="txtConsignatario" Enabled="true" Placeholder="Nombre Consignatario" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditConsignatario.NombreConsignatario">
+            </SfTextBox>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@ConsignatarioSave">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
 
 @code {
 

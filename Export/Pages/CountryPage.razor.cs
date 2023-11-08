@@ -3,6 +3,7 @@ using Export.Shared;
 using Microsoft.AspNetCore.Components;
 using Syncfusion.Blazor.Diagrams;
 using Syncfusion.Blazor.Grids;
+using Syncfusion.Blazor.Inputs;
 using Syncfusion.Blazor.Navigations;
 using Syncfusion.Blazor.Popups;
 using Syncfusion.Blazor.Schedule.Internal;
@@ -14,6 +15,7 @@ namespace Export.Pages {
 
         IEnumerable<Country> country;
         SfDialog DialogAddEditCountry;
+        SfTextBox txt_countryName;
         WarningPage Warning;
         string WarningHeaderMessage = "";
         string WarningContentMessage = "";
@@ -86,6 +88,7 @@ namespace Export.Pages {
             addeditCountry = new Country();
             country = await CountryService.CountryList();
             StateHasChanged();
+            txt_countryName.FocusAsync();
         }
         public void RowSelectHandler(RowSelectEventArgs<Country> args) {
             SelectedCountryID = args.Data.CountryID;

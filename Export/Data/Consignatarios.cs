@@ -6,7 +6,7 @@ namespace Export.Data {
         [Required]
         public int ConsignatarioID { get; set; }
         [Required]
-        public int NombreConsignatario { get; set; }
+        public string NombreConsignatario { get; set; }
 
     }
 }

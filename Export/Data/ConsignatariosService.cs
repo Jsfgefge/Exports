@@ -1,6 +1,7 @@
 ﻿// This is the service for the Consignatarios class.
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Syncfusion.Blazor.Inputs;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,15 +16,16 @@ namespace Export.Data {
         }
         // Add (create) a Consignatarios table row (SQL Insert)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> ConsignatariosInsert(Consignatarios consignatarios) {
+        public async Task<int> ConsignatariosInsert(string consignatarioName) {
+            int Success = 0;
+            var parameters = new DynamicParameters();
+            parameters.Add("nombreConsignatario", consignatarioName, DbType.String);
+            parameters.Add("@ReturnValue", dbType:DbType.Int32, direction:ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("NombreConsignatario", consignatarios.NombreConsignatario, DbType.Int64);
-
-                // Stored procedure method
                 await conn.ExecuteAsync("spConsignatarios_Insert", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
         // Get a list of consignatarios rows (SQL Select)
         // This only works if you're already created the stored procedure.
@@ -31,28 +33,6 @@ namespace Export.Data {
             IEnumerable<Consignatarios> consignatarioss;
             using (var conn = new SqlConnection(_configuration.Value)) {
                 consignatarioss = await conn.QueryAsync<Consignatarios>("spConsignatarios_List", commandType: CommandType.StoredProcedure);
-            }
-            return consignatarioss;
-        }
-        //Search for data (very generic...you may need to adjust.
-        public async Task<IEnumerable<Consignatarios>> ConsignatariosSearch(string @Param) {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Param", Param, DbType.String);
-            IEnumerable<Consignatarios> consignatarioss;
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                consignatarioss = await conn.QueryAsync<Consignatarios>("spConsignatarios_Search", parameters, commandType: CommandType.StoredProcedure);
-            }
-            return consignatarioss;
-        }
-        // Search based on date range. Code generator makes wild guess, you 
-        // will likely need to adjust field names
-        public async Task<IEnumerable<Consignatarios>> ConsignatariosDateRange(DateTime @StartDate, DateTime @EndDate) {
-            var parameters = new DynamicParameters();
-            parameters.Add("@StartDate", StartDate, DbType.Date);
-            parameters.Add("@EndDate", EndDate, DbType.Date);
-            IEnumerable<Consignatarios> consignatarioss;
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                consignatarioss = await conn.QueryAsync<Consignatarios>("spConsignatarios_DateRange", parameters, commandType: CommandType.StoredProcedure);
             }
             return consignatarioss;
         }
@@ -70,27 +50,17 @@ namespace Export.Data {
         }
         // Update one Consignatarios row based on its ConsignatariosID (SQL Update)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> ConsignatariosUpdate(Consignatarios consignatarios) {
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("ConsignatarioID", consignatarios.ConsignatarioID, DbType.Int64);
-
-                parameters.Add("NombreConsignatario", consignatarios.NombreConsignatario, DbType.Int64);
-
-                await conn.ExecuteAsync("spConsignatarios_Update", parameters, commandType: CommandType.StoredProcedure);
-            }
-            return true;
-        }
-
-        // Physically delete one Consignatarios row based on its ConsignatariosID (SQL Delete)
-        // This only works if you're already created the stored procedure.
-        public async Task<bool> ConsignatariosDelete(int ConsignatarioID) {
+        public async Task<int> ConsignatariosUpdate(string nombreConsignatario, int consignatarioID) {
+            int Success = 0;
             var parameters = new DynamicParameters();
-            parameters.Add("@ConsignatarioID", ConsignatarioID, DbType.Int32);
+            parameters.Add("nombreConsignatario", nombreConsignatario, DbType.String);
+            parameters.Add("consignatarioID", consignatarioID, DbType.Int32);
+            parameters.Add("@ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                await conn.ExecuteAsync("spConsignatarios_Delete", parameters, commandType: CommandType.StoredProcedure);
+                await conn.ExecuteAsync("spConsignatarios_Update", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ReturnValue");
             }
-            return true;
+            return Success;
         }
     }
 }
