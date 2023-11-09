@@ -1,0 +1,65 @@
+﻿@page "/exportHeader/{InvoiceNo:int}"
+@* URL temporal, posteriormente sera cambiada para usar GUID *@
+@using Export.Data
+
+<h3>Export - @('B')@InvoiceNo</h3>
+
+<div class="container border" style="position:relative; left:-100px;">
+    <div class="row border">
+        <div class="col-sm border">
+            <SfTextBox Enabled="false"
+                       Placeholder="Consignatario"
+                       FloatLabelType="@FloatLabelType.Always"
+                       @bind-Value="@consignatario">
+            </SfTextBox>
+            <div class="container border">
+                <div class="row ">
+                    <div class="col-sm-3 border">
+                        @aduana
+                    </div>
+                    <div class="col-sm-3 border">
+                        @cargador
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3 border">
+                        @pais
+                    </div>
+                    <div class="col-sm-3 border">
+                        @exchangeRate
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm border">
+            @Descripcion
+        </div>
+        <div class="col-sm border">
+            Fecha Factura<br />
+            Fecha Embarque<br />
+            Serial <br /> @* Esto no sera visible al principio, solamente despues de agregarlo *@
+            Duca @* Esto no sera visible al principio, solamente despues de agregarlo *@
+        </div>
+    </div>
+</div>
+<br /><br /><br />
+<div class="container">
+    <div class="row">
+        <div class="col-sm border">
+            Detalle prod
+        </div>
+
+        <div class="col-sm border">
+            Poliza Importacion
+        </div>
+
+        <div class="col-sm border">
+            Co-ex
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+}

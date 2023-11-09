@@ -1,9 +1,172 @@
 ﻿@page "/"
+@using Export.Data
 
-<PageTitle>Index</PageTitle>
+<div class="col-sm-12">
+    <h3>Exports</h3>
+    <br />
+    <SfGrid DataSource="@exportheader"
+            Toolbar="Toolbaritems">
+        <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="ExportHeader"></GridEvents>
+        <GridColumns>
+            <GridColumn Field="@nameof(ExportHeader.InvoiceNo)"
+                        HeaderText="Factura No."
+                        TextAlign="TextAlign.Right"
+                        Width="5">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.ConsignatarioID)"
+                        HeaderText="Consignatario"
+                        TextAlign="TextAlign.Left"
+                        Width="10">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.AduanasID)"
+                        HeaderText="Aduana"
+                        TextAlign="TextAlign.Left"
+                        Width="10">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.CountryID)"
+                        HeaderText="Pais Destino"
+                        TextAlign="TextAlign.Left"
+                        Width="10">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.CargadorID)"
+                        HeaderText="Cargador"
+                        TextAlign="TextAlign.Left"
+                        Width="10">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.Description)"
+                        HeaderText="Descripcion"
+                        TextAlign="TextAlign.Left"
+                        Width="40">
+            </GridColumn>
+            <GridColumn Field="@nameof(ExportHeader.HandlerID)"
+                        HeaderText="Handler"
+                        TextAlign="TextAlign.Left"
+                        Width="10">
+            </GridColumn>
+        </GridColumns>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+    </SfGrid>
+</div>
+<SfDialog @ref="DialogAddExport"
+          IsModal="true"
+          Width="700px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>New Export</Header>
+    </DialogTemplates>
+    <EditForm Model="@addExport">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <SfDatePicker TValue="DateTime"
+                                  Placeholder="Invoice Date"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="addExport.InvoiceDate">
+                    </SfDatePicker>
+                    <SfDropDownList DataSource="@consignatarios"
+                                    TItem="Consignatarios"
+                                    TValue="int"
+                                    @bind-Value="addExport.ConsignatarioID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Consginatario"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="NombreConsignatario" Value="ConsignatarioID" ></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Consignatarios" Context="contextName">
+                            <ItemTemplate>
+                                <div class="name" title="@((contextName as Consignatarios).NombreConsignatario)">@((contextName as Consignatarios).NombreConsignatario)
+                                </div>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
+                    </SfDropDownList>
+                    <SfDropDownList DataSource="@aduanas"
+                                    TItem="Aduanas"
+                                    TValue="int"
+                    @bind-Value="addExport.AduanasID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Aduana"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="NombreAduana" Value="AduanasID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                    <SfTextBox Enabled="true"                              
+                               Placeholder="Descripcion"
+                               FloatLabelType="@FloatLabelType.Auto"
+                               CssClass="e-style"
+                    @bind-Value="addExport.Description">
+                    </SfTextBox>
+                </div>
+                <div class="col-sm-5">
+                    <SfDropDownList DataSource="@country"
+                                    TItem="Country"
+                                    TValue="int"
+                    @bind-Value="addExport.CountryID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Pais Destino"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="CountryISO" Value="CountryID"></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Country" Context="contextName">
+                            <ItemTemplate>
+                                <div class="name" title="@((contextName as Country).CountryName)">
+                                    @((contextName as Country).CountryName)
+                                </div>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
+                    </SfDropDownList>
+                    <SfDropDownList DataSource="@cargador"
+                                    TItem="Cargador"
+                                    TValue="int"
+                    @bind-Value="addExport.CargadorID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Cargador"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="Descripcion" Value="CargadorID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                    <SfDatePicker TValue="DateTime"
+                                  Placeholder="Boarding Date"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="addExport.BoardingDate">
+                    </SfDatePicker>
+                    <SfNumericTextBox Enabled="false" 
+                                      Placeholder="Taza de cambio"
+                                      FloatLabelType="@FloatLabelType.Auto"
+                                      CssClass="e-style" 
+                                      ShowSpinButton="false"
+                                      @bind-Value="addExport.ExchangeRate">
+                    </SfNumericTextBox>
+                </div>
+            </div>
+        </div><br />
+        <div class="e-footer-content">
+            <div class="row">
+                <div class="col-sm-2" style="text-align:left;font-size:small;">
+                    <SfDropDownList DataSource="@doctype"
+                                    TItem="docType"
+                                    TValue="int"
+                    @bind-Value="addExport.DocTypeID"
+                                    Enabled="true">@docTypelabel
+                        <DropDownListFieldSettings Text="docName" Value="docID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="col-sm-2" style="text-align:left; font-size:small;">
+                    <SfDropDownList DataSource="@incoterms"
+                                    TItem="Incoterms"
+                                    TValue="int"
+                    @bind-Value="addExport.IncotermID"
+                                    Enabled="true">
+                        @incotermslabel
+                        <DropDownListFieldSettings Text="incoterm" Value="incotermID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+                <div class="col-sm button-container">
+                    <button type="button" class="e-btn e-normal e-primary" @onclick="@exportSave">Confirmar </button>
+                    <button type="button" class="e-btn e-normal" @onclick="@Cancel">Cancel</button>
+                </div>
+            </div>
+
+        </div>
+
+    </EditForm>
+
+</SfDialog>

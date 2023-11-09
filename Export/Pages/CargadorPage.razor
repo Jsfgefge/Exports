@@ -3,7 +3,7 @@
 @using Syncfusion.Blazor.Navigations
 
 
-<h3>cargador</h3>
+<h3>Cargador</h3>
 @* HACE FALTA PONER DATAVALIDATION, AUNQUE YA QUE SOLO EL DEVELOPER VA A ACCEDER A ESTO PUEDE QUE DE IGUAL *@
 <SfGrid DataSource="@cargador"
         Toolbar="@Toolbaritems"
@@ -18,7 +18,7 @@
                     Width="20">
         </GridColumn>
         <GridColumn Field="@nameof(Cargador.Descripcion)"
-                    HeaderText="Consignatario"
+                    HeaderText="Cargador"
                     TextAlign="TextAlign.Left"
                     Width="40">
         </GridColumn>
@@ -37,7 +37,7 @@
     </DialogTemplates>
     <EditForm Model="addeditCargador">
         <div>
-            <SfTextBox @ref="txtCargador" Enabled="true" Placeholder="Nombre Consignatario" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditCargador.Descripcion">
+            <SfTextBox @ref="txtCargador" Enabled="true" Placeholder="Nombre Cargador" FloatLabelType="FloatLabelType.Always" @bind-Value="addeditCargador.Descripcion">
             </SfTextBox>
         </div>
         <br /><br />

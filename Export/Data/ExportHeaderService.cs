@@ -35,7 +35,7 @@ namespace Export.Data {
                 parameters.Add("Closed", exportheader.Closed, DbType.Boolean);
                 parameters.Add("HandlerID", exportheader.HandlerID, DbType.Int64);
                 parameters.Add("SupervisorID", exportheader.SupervisorID, DbType.Int64);
-                parameters.Add("AnulledDate", exportheader.AnulledDate, DbType.Int64);
+                parameters.Add("AnulledDate", exportheader.AnulledDate, DbType.Date);
                 parameters.Add("PrimaImportada", exportheader.PrimaImportada, DbType.Boolean);
 
                 // Stored procedure method
@@ -77,10 +77,10 @@ namespace Export.Data {
 
         // Get one exportheader based on its ExportHeaderID (SQL Select)
         // This only works if you're already created the stored procedure.
-        public async Task<ExportHeader> ExportHeader_GetOne(int @Headerid) {
+        public async Task<ExportHeader> ExportHeader_GetOne(int @InvoiceNo) {
             ExportHeader exportheader = new ExportHeader();
             var parameters = new DynamicParameters();
-            parameters.Add("@Headerid", Headerid, DbType.Int32);
+            parameters.Add("@invoiceNo", InvoiceNo, DbType.Int32);
             using (var conn = new SqlConnection(_configuration.Value)) {
                 exportheader = await conn.QueryFirstOrDefaultAsync<ExportHeader>("spExportHeader_GetOne", parameters, commandType: CommandType.StoredProcedure);
             }

@@ -10,7 +10,7 @@ namespace Export.Data {
         Task<IEnumerable<ExportHeader>> ExportHeaderList();
         Task<IEnumerable<ExportHeader>> ExportHeaderSearch(string Param);
         Task<IEnumerable<ExportHeader>> ExportHeaderDateRange(DateTime @StartDate, DateTime @EndDate);
-        Task<ExportHeader> ExportHeader_GetOne(int Headerid);
+        Task<ExportHeader> ExportHeader_GetOne(int InvoiceID);
         Task<bool> ExportHeaderUpdate(ExportHeader exportheader);
         Task<bool> ExportHeaderDelete(int Headerid);
     }
