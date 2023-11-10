@@ -92,14 +92,10 @@
                 </div>
                 <div class="col-sm-4 border" style="place-self:center;">
                     <button>
-                        hola
+                        Editar
                     </button>
                 </div>
             </div>
-
-
-
-
         </div>
     </div>
 </div>
@@ -107,7 +103,113 @@
 <br />
 <br />
 
-
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm border">
+            <SfGrid DataSource="@detalleproducto"
+                    Toolbar="@ToolbaritemsProds"
+                    Width="500px">
+                <GridEvents OnToolbarClick="ToolbarClickHandlerProds" TValue="DetalleProducto"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(DetalleProducto.CodigoHTS)"
+                                HeaderText="HTS"
+                                TextAlign="TextAlign.Left"
+                                Width="100">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(DetalleProducto.Description)"
+                                HeaderText="Descripcion"
+                                TextAlign="TextAlign.Left"
+                                Width="150">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(DetalleProducto.Categoria)"
+                                HeaderText="Categoria"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(DetalleProducto.Cantidad)"
+                                HeaderText="Cantidad"
+                                TextAlign="TextAlign.Right"
+                                Width="80">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(DetalleProducto.Medida)"
+                                HeaderText="Medida"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(DetalleProducto.PricePerUnit)"
+                                HeaderText="Precio/Unidad"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+        <div class="col-sm border">
+            <SfGrid DataSource="@polizaimportacion"
+                    Toolbar="@ToolbaritemsPoliza"
+                    Width="510">
+                <GridEvents OnToolbarClick="ToolbarClickHandlerPoliza" TValue="PolizaImportacion"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(PolizaImportacion.PolizaNo)"
+                                HeaderText="Poliza No"
+                                TextAlign="TextAlign.Right"
+                                Width="50">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PolizaImportacion.countryISO)"
+                                HeaderText="Pais"
+                                TextAlign="TextAlign.Left"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PolizaImportacion.Quantity)"
+                                HeaderText="Cantidad"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PolizaImportacion.Amount)"
+                                HeaderText="Amount"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PolizaImportacion.Linea)"
+                                HeaderText="Linea"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PolizaImportacion.Date)"
+                                HeaderText="Fecha"
+                                TextAlign="TextAlign.Right"
+                                Width="75">
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+        <div class="col-sm border">
+            <SfGrid DataSource="@facturacoexpo"
+                    Toolbar="@ToolbaritemsCoexpo"
+                    Width="525px">
+                <GridEvents OnToolbarClick="ToolbarClickHandlerCoexpo" TValue="FacturaCoexpo"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(FacturaCoexpo.Proveedor)"
+                                HeaderText="HTS"
+                                TextAlign="TextAlign.Right">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(FacturaCoexpo.TipoProveedor)"
+                                HeaderText="Descripcion"
+                                TextAlign="TextAlign.Left">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(FacturaCoexpo.Factura)"
+                                HeaderText="Categoria"
+                                TextAlign="TextAlign.Right">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(FacturaCoexpo.Amount)"
+                                HeaderText="Cantidad"
+                                TextAlign="TextAlign.Right">
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
 
 
 
@@ -118,7 +220,6 @@
     .grid-container {
         display: grid;
         max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
-        grid-gap: 15px; /* size of the gap between columns */
         align-self: center;
     }
     .maingrid-template{
@@ -126,6 +227,9 @@
     }
     .secondarygrid-template{
         grid-template-columns: 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+    }
+    .grid-container-mod{
+        max-width: 1500px;
     }
 </style>
 

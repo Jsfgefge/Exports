@@ -22,5 +22,7 @@ namespace Export.Data {
         [Required]
         public DateTime Date { get; set; }
 
+        public string countryISO { get; set; }
+
     }
 }

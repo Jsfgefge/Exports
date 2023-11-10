@@ -10,8 +10,8 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
     <h3>Exports</h3>
     <br />
     <SfGrid DataSource="@exportheader"
-            Toolbar="Toolbaritems">
-        <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="ExportHeader"></GridEvents>
+            Toolbar="@Toolbaritems">
+        <GridEvents OnToolbarClick="ToolbarClickHandler" OnRecordDoubleClick="RowDoubleClickHandler" RowSelected="RowSelectHandler" TValue="ExportHeader"></GridEvents>
         <GridColumns>
             <GridColumn Field="@nameof(ExportHeader.InvoiceNo)"
                         HeaderText="Factura No."

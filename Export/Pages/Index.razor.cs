@@ -28,6 +28,15 @@ namespace Export.Pages
         [Inject]
         ICargadorService CargadorService { get; set; }
 
+
+        //private Guid selectedPOHeaderGuid { get; set; }
+
+        private int selectedInvoiceID { get; set; } = 0;
+
+        string WarningHeaderMessage = "";
+        string WarningContentMessage = "";
+        WarningPage Warning;
+
         IEnumerable<ExportHeader> exportheader;
         IEnumerable<Consignatarios> consignatarios;
         IEnumerable<Aduanas> aduanas;
@@ -111,12 +120,32 @@ namespace Export.Pages
             }
             if (args.Item.Text == "Edit")
             {
-                //Code for edit
+                if (selectedInvoiceID == 0)
+                {
+                    WarningHeaderMessage = "Warning!";
+                    WarningContentMessage = "Please select an Export from the grid.";
+                    Warning.OpenDialog();
+                }
+                else
+                {
+                    NavigationManager.NavigateTo($"/exportHeader/{selectedInvoiceID}");
+                }
             }
             if (args.Item.Text == "Delete")
             {
                 //Code for delete
             }
+        }
+
+        public void RowSelectHandler(RowSelectEventArgs<ExportHeader> args)
+        {
+            selectedInvoiceID = args.Data.InvoiceNo;
+            //selectedPOHeaderGuid = args.Data.POHeaderGuid;
+        }
+
+        public async Task RowDoubleClickHandler(RecordDoubleClickEventArgs<ExportHeader> args)
+        {
+            NavigationManager.NavigateTo($"/exportHeader/{selectedInvoiceID}");
         }
 
         private async void exportSave()
