@@ -4,7 +4,7 @@
 
 <h3>Export - @('B')@InvoiceNo</h3>
 
-<div class="grid-container border"  >
+<div class="container border">
     <div class="row border">
         <div class="col-sm border">
             <SfTextBox Enabled="false"
@@ -12,42 +12,42 @@
                        FloatLabelType="@FloatLabelType.Always"
             @bind-Value="@exportheader.nombreConsignatario">
             </SfTextBox>
-            <div class="container border">
-                <div class="row ">
-                    <div class="col-sm-4 border">
+            <br /><br />
+            <div class="row ">
+                <div class="col-sm-4 border">
 
-                        <SfTextBox Enabled="false"
-                                   Placeholder="Aduana"
-                                   FloatLabelType="@FloatLabelType.Always"
-                        @bind-Value="@exportheader.abreviacionAduana">
-                        </SfTextBox>
-                    </div>
-                    <div class="col-sm-4 border">
-
-                        <SfTextBox Enabled="false"
-                                   Placeholder="Cargador"
-                                   FloatLabelType="@FloatLabelType.Always"
-                        @bind-Value="@exportheader.cargador">
-                        </SfTextBox>
-                    </div>
+                    <SfTextBox Enabled="false"
+                               Placeholder="Aduana"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.abreviacionAduana">
+                    </SfTextBox>
                 </div>
-                <div class="row">
-                    <div class="col-sm-4 border">
+                <div class="col-sm-4 border">
 
-                        <SfTextBox Enabled="false"
-                                   Placeholder="Pais"
-                                   FloatLabelType="@FloatLabelType.Always"
-                        @bind-Value="@exportheader.countryISO">
-                        </SfTextBox>
-                    </div>
-                    <div class="col-sm-4 border">
-                        <SfNumericTextBox Enabled="false"
-                                          Placeholder="Tipo cambio"
-                                          ShowSpinButton="false"
-                                          FloatLabelType="@FloatLabelType.Always"
-                        @bind-Value="@exportheader.ExchangeRate">
-                        </SfNumericTextBox>
-                    </div>
+                    <SfTextBox Enabled="false"
+                               Placeholder="Cargador"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.cargador">
+                    </SfTextBox>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4 border">
+
+                    <SfTextBox Enabled="false"
+                               Placeholder="Pais"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.countryISO">
+                    </SfTextBox>
+                </div>
+                <div class="col-sm-4 border">
+                    <SfNumericTextBox Enabled="false"
+                                      Placeholder="Tipo cambio"
+                                      ShowSpinButton="false"
+                                      Format=""
+                                      FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.ExchangeRate">
+                    </SfNumericTextBox>
                 </div>
             </div>
         </div>
@@ -59,58 +59,73 @@
             @bind-Value="@exportheader.Description">
             </SfTextBox>
         </div>
-        <div class="col-sm border">
-            <SfDatePicker TValue="DateTime"
-                          Enabled="false"
-                          Placeholder="Fecha Factura"
-                          FloatLabelType="@FloatLabelType.Auto"
-            @bind-Value="exportheader.InvoiceDate">
-            </SfDatePicker>
-            <SfDatePicker TValue="DateTime"
-                          Enabled="false"
-                          Placeholder="Fecha Embarque"
-                          FloatLabelType="@FloatLabelType.Auto"
-            @bind-Value="exportheader.BoardingDate">
-            </SfDatePicker>
-            <SfTextBox Enabled="false"
-                       Placeholder="Numero Factura SAT"
-                       FloatLabelType="@FloatLabelType.Always"
-            @bind-Value="@exportheader.SerialNo">
-            </SfTextBox>
-            <SfNumericTextBox Enabled="false"
-                              ShowSpinButton="false"
-                              Placeholder="Dua Simplificada"
-                              FloatLabelType="@FloatLabelType.Always"
-            @bind-Value="@exportheader.DuaSimplificada">
-            </SfNumericTextBox>
+        <div class="col-sm-3 border">
+            <div class="row border">
+                <div class="col-sm">
+                    <SfDatePicker TValue="DateTime"
+                                  Enabled="false"
+                                  Placeholder="Fecha Factura"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="exportheader.InvoiceDate">
+                    </SfDatePicker>
+                    <SfDatePicker TValue="DateTime"
+                                  Enabled="false"
+                                  Placeholder="Fecha Embarque"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="exportheader.BoardingDate">
+                    </SfDatePicker>
+                </div>
+            </div>
+            <div class="row border">
+                <div class="col-sm-8 border">
+                    <SfTextBox Enabled="false"
+                               Placeholder="Numero Factura SAT"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.SerialNo">
+                    </SfTextBox>
+                    <SfNumericTextBox Enabled="false"
+                                      ShowSpinButton="false"
+                                      Placeholder="Dua Simplificada"
+                                      FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@exportheader.DuaSimplificada">
+                    </SfNumericTextBox>
+                </div>
+                <div class="col-sm-4 border" style="place-self:center;">
+                    <button>
+                        hola
+                    </button>
+                </div>
+            </div>
+
+
+
+
         </div>
     </div>
 </div>
 <br />
 <br />
 <br />
-<div class="container">
-    <div class="row">
-        <div class="col-sm border">
-            Detalle prod
-        </div>
 
-        <div class="col-sm border">
-            Poliza Importacion
-        </div>
 
-        <div class="col-sm border">
-            Co-ex
-        </div>
-    </div>
-</div>
+
+
+
+
+
 
 <style>
     .grid-container {
         display: grid;
-        max-width: 2000px; /* Maximum width of the whole container - in this case both columns */
-        grid-template-columns: 1fr ; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
-        grid-gap: 75px; /* size of the gap between columns */
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-gap: 15px; /* size of the gap between columns */
+        align-self: center;
+    }
+    .maingrid-template{
+        grid-template-columns: 3fr 4fr 2fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+    }
+    .secondarygrid-template{
+        grid-template-columns: 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
     }
 </style>
 

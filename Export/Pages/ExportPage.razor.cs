@@ -25,6 +25,8 @@ namespace Export.Pages
         {
             exportheader = await ExportHeaderService.ExportHeader_GetOne(InvoiceNo);
 
+            exportheader.SerialNo = "E6E5577F-1161446804";
+
         }
 
 

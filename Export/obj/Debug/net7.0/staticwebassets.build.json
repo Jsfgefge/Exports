@@ -1,11 +1,23 @@
 {
   "Version": 1,
-  "Hash": "LasPYfpGhlZ573NviTSl9jhHEeC19zKt8ms0eoGioAo=",
+  "Hash": "WXgfPIUtNniedWQNbSyCdviDB6GeJysmjSwbpzdLcC8=",
   "Source": "Export",
   "BasePath": "_content/Export",
   "Mode": "Default",
   "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "C:\\Users\\PC\\Documents\\repos\\Exports\\ExchangeRate\\ExchangeRate.csproj",
+      "Version": 2,
+      "Source": "ExchangeRate",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework"
+    }
+  ],
   "DiscoveryPatterns": [
     {
       "Name": "Export\\wwwroot",

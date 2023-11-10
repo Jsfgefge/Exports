@@ -10,6 +10,7 @@ using Syncfusion.Blazor.Schedule.Internal;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
+using ExchangeRate.Controllers;
 
 namespace Export.Pages
 {
@@ -32,6 +33,9 @@ namespace Export.Pages
         IEnumerable<Aduanas> aduanas;
         IEnumerable<Country> country;
         IEnumerable<Cargador> cargador;
+
+        ExchangeRateController exchangeRate = new ExchangeRateController();
+        
 
         #region Relleno
         //CLASES RELLENO, SOLO SERVIRAN PARA ESTA PARTE YA QUE NO SE CUENTA CON LAS DEBIDAS TABLAS EN SQL
@@ -71,7 +75,6 @@ namespace Export.Pages
         string docTypelabel = "Tipo \nde\n documento";
         string incotermslabel = "Incoterm";
         private List<ItemModel> Toolbaritems = new List<ItemModel>();
-        API_Obj rate = new API_Obj();
 
         ExportHeader addExport = new ExportHeader();
         SfDialog DialogAddExport;
@@ -90,14 +93,9 @@ namespace Export.Pages
             addExport.DocTypeID = 1;
             addExport.IncotermID = 4;
 
+            exchangeRate.GetAsync();
+
             newerInvoiceNo = exportheader.ToList()[0].InvoiceNo;
-
-            if (Rates.Import())
-            {
-
-
-                //addExport.ExchangeRate = (decimal)rate.conversion_rates.GTQ;
-            }
             Toolbaritems.Add(new ItemModel() { Text = "Add", TooltipText = "Add a new export", PrefixIcon = "e-add" });
             Toolbaritems.Add(new ItemModel() { Text = "Edit", TooltipText = "Add a new export", PrefixIcon = "e-add" });
             Toolbaritems.Add(new ItemModel() { Text = "Delete", TooltipText = "Add a new export", PrefixIcon = "e-add" });
@@ -107,6 +105,7 @@ namespace Export.Pages
         {
             if (args.Item.Text == "Add")
             {
+                addExport.ExchangeRate = (decimal)exchangeRate.ExchangeRate;
                 //Code for add
                 DialogAddExport.ShowAsync();
             }
@@ -122,8 +121,6 @@ namespace Export.Pages
 
         private async void exportSave()
         {
-
-
             addExport.InvoiceNo = newerInvoiceNo + 1;
             await ExportHeaderService.ExportHeaderInsert(addExport);
             NavigationManager.NavigateTo($"/exportHeader/{addExport.InvoiceNo}");
