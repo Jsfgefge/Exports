@@ -11,8 +11,10 @@ using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
 
-namespace Export.Pages {
-    public partial class Index :ComponentBase {
+namespace Export.Pages
+{
+    public partial class Index : ComponentBase
+    {
         [Inject] NavigationManager NavigationManager { get; set; }
         [Inject]
         IExportHeaderService ExportHeaderService { get; set; }
@@ -33,11 +35,13 @@ namespace Export.Pages {
 
         #region Relleno
         //CLASES RELLENO, SOLO SERVIRAN PARA ESTA PARTE YA QUE NO SE CUENTA CON LAS DEBIDAS TABLAS EN SQL
-        public class Incoterms {
+        public class Incoterms
+        {
             public int incotermID { get; set; }
             public string incoterm { get; set; }
         }
-        public class docType {
+        public class docType
+        {
             public int docID { get; set; }
             public string docName { get; set; }
         }
@@ -72,7 +76,8 @@ namespace Export.Pages {
         ExportHeader addExport = new ExportHeader();
         SfDialog DialogAddExport;
 
-        protected override async Task OnInitializedAsync() {
+        protected override async Task OnInitializedAsync()
+        {
             exportheader = await ExportHeaderService.ExportHeaderList();
             consignatarios = await ConsignatariosService.ConsignatariosList();
             aduanas = await AduanasService.AduanasList();
@@ -87,7 +92,8 @@ namespace Export.Pages {
 
             newerInvoiceNo = exportheader.ToList()[0].InvoiceNo;
 
-            if (Rates.Import()) {
+            if (Rates.Import())
+            {
 
 
                 //addExport.ExchangeRate = (decimal)rate.conversion_rates.GTQ;
@@ -97,20 +103,25 @@ namespace Export.Pages {
             Toolbaritems.Add(new ItemModel() { Text = "Delete", TooltipText = "Add a new export", PrefixIcon = "e-add" });
         }
 
-        public void ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args) {
-            if (args.Item.Text == "Add") {
+        public void ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+        {
+            if (args.Item.Text == "Add")
+            {
                 //Code for add
                 DialogAddExport.ShowAsync();
             }
-            if (args.Item.Text == "Edit") {
+            if (args.Item.Text == "Edit")
+            {
                 //Code for edit
             }
-            if (args.Item.Text == "Delete") {
+            if (args.Item.Text == "Delete")
+            {
                 //Code for delete
             }
         }
 
-        private async void exportSave() {
+        private async void exportSave()
+        {
 
 
             addExport.InvoiceNo = newerInvoiceNo + 1;
@@ -118,7 +129,8 @@ namespace Export.Pages {
             NavigationManager.NavigateTo($"/exportHeader/{addExport.InvoiceNo}");
         }
 
-        private void Cancel() {
+        private void Cancel()
+        {
             this.DialogAddExport.HideAsync();
         }
 

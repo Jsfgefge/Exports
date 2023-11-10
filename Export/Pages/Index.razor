@@ -1,6 +1,11 @@
 ﻿@page "/"
 @using Export.Data
 
+@* AGREGAR TOOL TIP AL PAIS Y AL CONSIGNATARIO, ESTO EN CASO QUE NO TENGA ESPACIO SUFICIENTE (consignatario), en el caso del pais para poder de forma facil que pais es sin necesidad de agregar una tabla extra.
+
+Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de agregar cosas extras y hacer un esquema de colores. Tipo cuando una exportacion se cancelo rojo y cuando ya esta cerrada verde. Con esto los campos extra con los checkbox es redundante.
+*@
+
 <div class="col-sm-12">
     <h3>Exports</h3>
     <br />
@@ -13,22 +18,22 @@
                         TextAlign="TextAlign.Right"
                         Width="5">
             </GridColumn>
-            <GridColumn Field="@nameof(ExportHeader.ConsignatarioID)"
+            <GridColumn Field="@nameof(ExportHeader.nombreConsignatario)"
                         HeaderText="Consignatario"
                         TextAlign="TextAlign.Left"
                         Width="10">
             </GridColumn>
-            <GridColumn Field="@nameof(ExportHeader.AduanasID)"
+            <GridColumn Field="@nameof(ExportHeader.abreviacionAduana)"
                         HeaderText="Aduana"
                         TextAlign="TextAlign.Left"
                         Width="10">
             </GridColumn>
-            <GridColumn Field="@nameof(ExportHeader.CountryID)"
+            <GridColumn Field="@nameof(ExportHeader.countryISO)"
                         HeaderText="Pais Destino"
                         TextAlign="TextAlign.Left"
                         Width="10">
             </GridColumn>
-            <GridColumn Field="@nameof(ExportHeader.CargadorID)"
+            <GridColumn Field="@nameof(ExportHeader.cargador)"
                         HeaderText="Cargador"
                         TextAlign="TextAlign.Left"
                         Width="10">
@@ -44,8 +49,6 @@
                         Width="10">
             </GridColumn>
         </GridColumns>
-
-
     </SfGrid>
 </div>
 <SfDialog @ref="DialogAddExport"

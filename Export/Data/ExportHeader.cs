@@ -39,5 +39,9 @@ namespace Export.Data {
         public DateTime AnulledDate { get; set; }
         public bool PrimaImportada { get; set; }
 
+        public string nombreConsignatario { get; set; }
+        public string abreviacionAduana { get; set; }
+        public string countryISO { get; set; }
+        public string cargador { get; set; }
     }
 }

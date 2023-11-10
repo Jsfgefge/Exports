@@ -9,8 +9,10 @@ using Syncfusion.Blazor.Popups;
 using Syncfusion.Blazor.Schedule.Internal;
 using System.Runtime.CompilerServices;
 
-namespace Export.Pages {
-    public partial class ExportPage : ComponentBase {
+namespace Export.Pages
+{
+    public partial class ExportPage : ComponentBase
+    {
         [Parameter]
         public int InvoiceNo { get; set; }
         [Inject]
@@ -18,24 +20,11 @@ namespace Export.Pages {
 
         ExportHeader exportheader = new ExportHeader();
 
-        string consignatario = "";
-        string aduana = "";
-        string cargador = "";
-        string pais = "";
-        string exchangeRate = "";
-        string Descripcion = "";
-        
 
-
-        protected override async Task OnInitializedAsync() {
+        protected override async Task OnInitializedAsync()
+        {
             exportheader = await ExportHeaderService.ExportHeader_GetOne(InvoiceNo);
 
-            consignatario = exportheader.ConsignatarioID.ToString();
-            aduana = exportheader.AduanasID.ToString();
-            cargador = exportheader.CargadorID.ToString();
-            pais = exportheader.CountryID.ToString();
-            exchangeRate = exportheader.ExchangeRate.ToString();
-            Descripcion = exportheader.Description.ToString();
         }
 
 

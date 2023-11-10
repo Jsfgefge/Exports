@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Export.Data {
+namespace Export.Data
+{
     // Each item below provides an interface to a method in ExportHeaderServices.cs
-    public interface IExportHeaderService {
+    public interface IExportHeaderService
+    {
         Task<bool> ExportHeaderInsert(ExportHeader exportheader);
         Task<IEnumerable<ExportHeader>> ExportHeaderList();
         Task<IEnumerable<ExportHeader>> ExportHeaderSearch(string Param);
