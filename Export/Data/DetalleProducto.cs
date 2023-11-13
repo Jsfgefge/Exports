@@ -17,11 +17,11 @@ namespace Export.Data {
         [StringLength(255)]
         public string Categoria { get; set; }
         [Required]
-        public int Cantidad { get; set; }
+        public double Cantidad { get; set; }
         [Required]
-        public int Medida { get; set; }
+        public string Medida { get; set; }
         [Required]
-        public int PricePerUnit { get; set; }
+        public decimal PricePerUnit { get; set; }
 
     }
 }

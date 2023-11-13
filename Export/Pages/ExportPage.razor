@@ -2,8 +2,9 @@
 @* URL temporal, posteriormente sera cambiada para usar GUID *@
 @using Export.Data
 
-<h3>Export - @('B')@InvoiceNo</h3>
+<h5>Export - @('B')@InvoiceNo</h5>
 
+@* GridHeader *@
 <div class="container border">
     <div class="row border">
         <div class="col-sm border">
@@ -103,134 +104,350 @@
 <br />
 <br />
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm border">
-            <SfGrid DataSource="@detalleproducto"
-                    Toolbar="@ToolbaritemsProds"
-                    Width="500px">
-                <GridEvents OnToolbarClick="ToolbarClickHandlerProds" TValue="DetalleProducto"></GridEvents>
-                <GridColumns>
-                    <GridColumn Field="@nameof(DetalleProducto.CodigoHTS)"
-                                HeaderText="HTS"
-                                TextAlign="TextAlign.Left"
-                                Width="100">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(DetalleProducto.Description)"
-                                HeaderText="Descripcion"
-                                TextAlign="TextAlign.Left"
-                                Width="150">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(DetalleProducto.Categoria)"
-                                HeaderText="Categoria"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(DetalleProducto.Cantidad)"
-                                HeaderText="Cantidad"
-                                TextAlign="TextAlign.Right"
-                                Width="80">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(DetalleProducto.Medida)"
-                                HeaderText="Medida"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(DetalleProducto.PricePerUnit)"
-                                HeaderText="Precio/Unidad"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                </GridColumns>
-            </SfGrid>
-        </div>
-        <div class="col-sm border">
-            <SfGrid DataSource="@polizaimportacion"
-                    Toolbar="@ToolbaritemsPoliza"
-                    Width="510">
-                <GridEvents OnToolbarClick="ToolbarClickHandlerPoliza" TValue="PolizaImportacion"></GridEvents>
-                <GridColumns>
-                    <GridColumn Field="@nameof(PolizaImportacion.PolizaNo)"
-                                HeaderText="Poliza No"
-                                TextAlign="TextAlign.Right"
-                                Width="50">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PolizaImportacion.countryISO)"
-                                HeaderText="Pais"
-                                TextAlign="TextAlign.Left"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PolizaImportacion.Quantity)"
-                                HeaderText="Cantidad"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PolizaImportacion.Amount)"
-                                HeaderText="Amount"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PolizaImportacion.Linea)"
-                                HeaderText="Linea"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PolizaImportacion.Date)"
-                                HeaderText="Fecha"
-                                TextAlign="TextAlign.Right"
-                                Width="75">
-                    </GridColumn>
-                </GridColumns>
-            </SfGrid>
-        </div>
-        <div class="col-sm border">
-            <SfGrid DataSource="@facturacoexpo"
-                    Toolbar="@ToolbaritemsCoexpo"
-                    Width="525px">
-                <GridEvents OnToolbarClick="ToolbarClickHandlerCoexpo" TValue="FacturaCoexpo"></GridEvents>
-                <GridColumns>
-                    <GridColumn Field="@nameof(FacturaCoexpo.Proveedor)"
-                                HeaderText="HTS"
-                                TextAlign="TextAlign.Right">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(FacturaCoexpo.TipoProveedor)"
-                                HeaderText="Descripcion"
-                                TextAlign="TextAlign.Left">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(FacturaCoexpo.Factura)"
-                                HeaderText="Categoria"
-                                TextAlign="TextAlign.Right">
-                    </GridColumn>
-                    <GridColumn Field="@nameof(FacturaCoexpo.Amount)"
-                                HeaderText="Cantidad"
-                                TextAlign="TextAlign.Right">
-                    </GridColumn>
-                </GridColumns>
-            </SfGrid>
-        </div>
+@* Grid DetalleProducto, Poliza, FacturaCoexpo *@
+<div class="grid-container" style="font-size:14px; font-weight:bold;">
+    <div class="grid-child border">
+        Detalle producto
+        <SfGrid DataSource="@productosList"
+                @ref="@detalleProductoGrid"
+                Toolbar="@ToolbaritemsProds"
+                Width="575px"
+                AllowTextWrap="true"
+                RowHeight="20"
+                Height="350px"
+                AllowResizing="true">
+               <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
+            <GridEvents OnToolbarClick="ToolbarClickHandlerProds" TValue="DetalleProducto"></GridEvents>
+            <GridColumns>
+                <GridColumn Field="@nameof(DetalleProducto.CodigoHTS)"
+                            HeaderText="HTS"
+                            TextAlign="TextAlign.Left"
+                            Width="14%">
+                </GridColumn>
+                <GridColumn Field="@nameof(DetalleProducto.Description)"
+                            HeaderText="Descripcion"
+                            TextAlign="TextAlign.Left"                            
+                            Width="30%">
+                </GridColumn>
+                <GridColumn Field="@nameof(DetalleProducto.Categoria)"
+                            HeaderText="Categoria"
+                            TextAlign="TextAlign.Right"
+                            Width="13%">
+                </GridColumn>
+                <GridColumn Field="@nameof(DetalleProducto.Cantidad)"
+                            HeaderText="Cantidad"
+                            TextAlign="TextAlign.Right"
+                            Width="12%">
+                </GridColumn>
+                <GridColumn Field="@nameof(DetalleProducto.Medida)"
+                            HeaderText="Medida"
+                            TextAlign="TextAlign.Right"
+                            Width="10%">
+                </GridColumn>
+                <GridColumn Field="@nameof(DetalleProducto.PricePerUnit)"
+                            HeaderText="Precio"
+                            TextAlign="TextAlign.Right"
+                            Width="12%">
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+    <div class="grid-child border">
+        Poliza Importacion
+        <SfGrid DataSource="@polizaimportacion"
+                Toolbar="@ToolbaritemsPoliza"
+                Width="455px"
+                RowHeight="20"
+                Height="350px"
+                AllowResizing="true"
+                AllowTextWrap="true">
+            <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
+            <GridEvents OnToolbarClick="ToolbarClickHandlerPoliza" TValue="PolizaImportacion"></GridEvents>
+            <GridColumns>
+                <GridColumn Field="@nameof(PolizaImportacion.PolizaNo)"
+                            HeaderText="Poliza"
+                            TextAlign="TextAlign.Right"
+                            Width="11%">
+                </GridColumn>
+                <GridColumn Field="@nameof(PolizaImportacion.CountryID)"
+                            HeaderText="Pais"
+                            TextAlign="TextAlign.Left"
+                            Width="7%">
+                </GridColumn>
+                <GridColumn Field="@nameof(PolizaImportacion.Quantity)"
+                            HeaderText="Cantidad"
+                            TextAlign="TextAlign.Right"
+                            Width="11%">
+                </GridColumn>
+                <GridColumn Field="@nameof(PolizaImportacion.Amount)"
+                            HeaderText="Amount"
+                            TextAlign="TextAlign.Right"
+                            Width="11%">
+                </GridColumn>
+                <GridColumn Field="@nameof(PolizaImportacion.Linea)"
+                            HeaderText="Linea"
+                            TextAlign="TextAlign.Right"
+                            Width="8%">
+                </GridColumn>
+                <GridColumn Field="@nameof(PolizaImportacion.Date)"
+                            HeaderText="Fecha"
+                            TextAlign="TextAlign.Right"
+                            Width="20%">
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+    <div class="grid-child border">
+        Co-Ex/Subcontratista/Complementariedad/Nacional
+        <SfGrid DataSource="@facturacoexpo"
+                Toolbar="@ToolbaritemsCoexpo"
+                Width="520px"
+                RowHeight="20"
+                Height="350px"
+                AllowResizing="true"
+                AllowTextWrap="true">
+            <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
+            <GridEvents OnToolbarClick="ToolbarClickHandlerCoexpo" TValue="FacturaCoexpo"></GridEvents>
+            <GridColumns>
+                <GridColumn Field="@nameof(FacturaCoexpo.Proveedor)"
+                            HeaderText="Proveedor"
+                            Width="30%"
+                            TextAlign="TextAlign.Left">
+                </GridColumn>
+                <GridColumn Field="@nameof(FacturaCoexpo.TipoProveedor)"
+                            HeaderText="Tipo"
+                            Width="20%"
+                            TextAlign="TextAlign.Left">
+                </GridColumn>
+                <GridColumn Field="@nameof(FacturaCoexpo.Factura)"
+                            HeaderText="Factura"
+                            Width="35%"
+                            TextAlign="TextAlign.Left">
+                </GridColumn>
+                <GridColumn Field="@nameof(FacturaCoexpo.Amount)"
+                            HeaderText="Amount"
+                            Width="20%"
+                            TextAlign="TextAlign.Right">
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
     </div>
 </div>
 
 
+<SfDialog @ref="DialogAddEditProduct"
+          IsModal="true"
+          ShowCloseIcon="true"
+          Visible="false"
+          Width="400px">
+    <DialogTemplates>
+        <Header> Agregar descripcion producto </Header>
+    </DialogTemplates>
+    <EditForm Model="@addeditDetalleProduct">
+        <h5>@('B')@addeditDetalleProduct.InvoiceNo</h5>
+        <SfDropDownList DataSource="@hts"
+                        TItem="HTS"
+                        TValue="string"
+                        Text="htsCodigo"
+                        @bind-Value="@addeditDetalleProduct.CodigoHTS"
+                        FloatLabelType="@FloatLabelType.Auto"
+                        Placeholder="HTS"
+                        Enabled="true">
+            <DropDownListTemplates TItem="HTS">
+                <HeaderTemplate>
+                    <span class="head">
+                        <span class="htsCode">
+                            HTS
+                        </span>
+                        <span class="description">
+                            Descripcion
+                        </span>
+                    </span>
+                </HeaderTemplate>
+                <ItemTemplate Context="contextName">
+                    <span class="item">
+                        <span class="htsCode">
+                            @((contextName as HTS).htsCodigo)
+                        </span>
+                        <span class="description">
+                            @((contextName as HTS).htsDescripcion)
+                        </span>
+                    </span>
+                </ItemTemplate>
+            </DropDownListTemplates>
+            <DropDownListFieldSettings Text="htsCodigo" Value="htsCodigo"></DropDownListFieldSettings>      
+            <DropDownListEvents TItem="HTS" TValue="string" OnValueSelect="OnChange"></DropDownListEvents>
+        </SfDropDownList>
+        <SfTextBox Enabled="true"
+                   Placeholder="Descripcion"
+                   FloatLabelType="@FloatLabelType.Auto"
+                   @bind-Value="@addeditDetalleProduct.Description">
+        </SfTextBox>
+        <SfTextBox Enabled="true"
+                   Placeholder="Categoria"
+                   FloatLabelType="@FloatLabelType.Auto"
+        @bind-Value="@addeditDetalleProduct.Categoria">
+        </SfTextBox>
+        <SfNumericTextBox Enabled="true"
+                   Placeholder="Cantidad"
+                   FloatLabelType="@FloatLabelType.Auto"
+                          ShowSpinButton="false"
+        @bind-Value="@addeditDetalleProduct.Cantidad">
+        </SfNumericTextBox>
+        <SfDropDownList DataSource="@medida"
+                        TItem="Medida"
+                        TValue="string"
+                        Text="medida"
+                        @bind-Value="@addeditDetalleProduct.Medida"
+                        FloatLabelType="@FloatLabelType.Auto"
+                        Placeholder="Medida"                        
+                        Enabled="true">
+            <DropDownListTemplates TItem="Medida">
+                <ItemTemplate Context="contextName">
+                    <span class="item">
+                        <span class="htsCode">
+                            @((contextName as Medida).medida)
+                        </span>
+                    </span>
+                </ItemTemplate>
+            </DropDownListTemplates>
+            <DropDownListFieldSettings Text="medida" Value="medida"></DropDownListFieldSettings>
+        </SfDropDownList>
+        <SfNumericTextBox Enabled="true"
+                   Placeholder="Precio por unidad"
+                   FloatLabelType="@FloatLabelType.Auto"
+                   ShowSpinButton="false"
+        @bind-Value="@addeditDetalleProduct.PricePerUnit">
+        </SfNumericTextBox>
 
 
 
+
+
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@ProductSave">Save</button>
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<SfDialog @ref="DialogAddEditPolizaImportacion"
+          IsModal="true"
+          ShowCloseIcon="true"
+          Visible="false"
+          Width="600px">
+    <DialogTemplates>
+        <Header> Agregar descripcion producto </Header>
+    </DialogTemplates>
+    <EditForm Model="@addeditDetalleProduct">
+        <br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@ProductSave">Save</button>
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+<SfDialog @ref="DialogAddEditFacturaCoex"
+          IsModal="true"
+          ShowCloseIcon="true"
+          Visible="false"
+          Width="600px">
+    <DialogTemplates>
+        <Header> Agregar descripcion producto </Header>
+    </DialogTemplates>
+    <EditForm Model="@addeditDetalleProduct">
+        <br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@ProductSave">Save</button>
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+
+
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
 
 <style>
     .grid-container {
         display: grid;
-        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
-        align-self: center;
+        max-width: 1600px; /* Maximum width of the whole container - in this case both columns */
+        grid-gap:5px;
+        grid-template-columns: 4.1fr 3.2fr 4fr;
     }
-    .maingrid-template{
-        grid-template-columns: 3fr 4fr 2fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+
+    .row{
+        padding-bottom: 10px;
     }
-    .secondarygrid-template{
-        grid-template-columns: 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+
+    .e-grid * {
+        font-size: 11px !important;
     }
-    .grid-container-mod{
-        max-width: 1500px;
+
+
+    /* To specify font size in SfTextBox */
+    .e-input:not(:valid), .e-input:valid, .e-float-input.e-control-wrapper input:not(:valid), .e-float-input.e-control-wrapper input:valid, .e-float-input input:not(:valid), .e-float-input input:valid, .e-input-group input:not(:valid), .e-input-group input:valid, .e-input-group.e-control-wrapper input:not(:valid), .e-input-group.e-control-wrapper input:valid, .e-float-input.e-control-wrapper textarea:not(:valid), .e-float-input.e-control-wrapper textarea:valid, .e-float-input textarea:not(:valid), .e-float-input textarea:valid, .e-input-group.e-control-wrapper textarea:not(:valid), .e-input-group.e-control-wrapper textarea:valid, .e-input-group textarea:not(:valid), .e-input-group textarea:valid {
+        font-size: 11px;
     }
+
+    .e-float-input.e-control-wrapper:not(.e-error) input:valid ~ label.e-float-text, .e-float-input.e-control-wrapper:not(.e-error) input ~ label.e-label-top.e-float-text {
+        font-size: 14px;
+    }
+
+    label.e-float-text, .e-float-input:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom,
+    .e-float-input.e-control-wrapper:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom {
+        font-size: 14px;
+    }
+
+    .head, .item {
+        display: table;
+        width: 100%;
+        margin: auto;
+        text-align: left;
+        font-size:11px;
+    }
+
+    
+
+    .head {
+        height: 30px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .htsCode,
+    .description {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    .htsCode {
+        width: 20%;
+    }
+
+    .description {
+        width: 80%;
+    }
+
+    .head .htsCode {
+        text-indent: 17px;
+    }
+
+    .head .description {
+        text-indent: 14px;
+    }
+
+    .e-ddl.e-input-group.e-control-wrapper .e-input {
+        font-size: 14px;
+    }
+
 </style>
 
 @code {
