@@ -15,26 +15,32 @@ namespace Export.Data {
         }
         // Add (create) a FacturaCoexpo table row (SQL Insert)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> FacturaCoexpoInsert(FacturaCoexpo facturacoexpo) {
+        public async Task<int> FacturaCoexpoInsert(int invoiceNo, string Proveedor, string tipoProveedor, string factura, decimal amount) {
+            int Success = 0;
+
+            var parameters = new DynamicParameters();
+            parameters.Add("InvoiceNo", invoiceNo, DbType.Int64);
+            parameters.Add("Proveedor", Proveedor, DbType.String);
+            parameters.Add("TipoProveedor", tipoProveedor, DbType.String);
+            parameters.Add("Factura", factura, DbType.String);
+            parameters.Add("Amount", amount, DbType.Decimal);
+            parameters.Add("@ResultValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("InvoiceNo", facturacoexpo.InvoiceNo, DbType.Int64);
-                parameters.Add("Proveedor", facturacoexpo.Proveedor, DbType.String);
-                parameters.Add("TipoProveedor", facturacoexpo.TipoProveedor, DbType.Int64);
-                parameters.Add("Factura", facturacoexpo.Factura, DbType.String);
-                parameters.Add("Amount", facturacoexpo.Amount, DbType.Decimal);
 
                 // Stored procedure method
                 await conn.ExecuteAsync("spFacturaCoexpo_Insert", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ResultValue");
             }
-            return true;
+            return Success;
         }
         // Get a list of facturacoexpo rows (SQL Select)
         // This only works if you're already created the stored procedure.
-        public async Task<IEnumerable<FacturaCoexpo>> FacturaCoexpoList() {
+        public async Task<IEnumerable<FacturaCoexpo>> FacturaCoexpoList(int invoiceNo) {
+            var parameters = new DynamicParameters();
+            parameters.Add("@invoiceNo", invoiceNo, DbType.Int32);
             IEnumerable<FacturaCoexpo> facturacoexpos;
             using (var conn = new SqlConnection(_configuration.Value)) {
-                facturacoexpos = await conn.QueryAsync<FacturaCoexpo>("spFacturaCoexpo_List", commandType: CommandType.StoredProcedure);
+                facturacoexpos = await conn.QueryAsync<FacturaCoexpo>("spFacturaCoexpo_List", parameters,commandType: CommandType.StoredProcedure);
             }
             return facturacoexpos;
         }
@@ -74,29 +80,45 @@ namespace Export.Data {
         }
         // Update one FacturaCoexpo row based on its FacturaCoexpoID (SQL Update)
         // This only works if you're already created the stored procedure.
-        public async Task<bool> FacturaCoexpoUpdate(FacturaCoexpo facturacoexpo) {
-            using (var conn = new SqlConnection(_configuration.Value)) {
-                var parameters = new DynamicParameters();
-                parameters.Add("CoexpoID", facturacoexpo.CoexpoID, DbType.Int64);
+        public async Task<int> FacturaCoexpoUpdate(FacturaCoexpo facturacoexpo) {
+            int Success = 0;
 
-                parameters.Add("InvoiceNo", facturacoexpo.InvoiceNo, DbType.Int64);
-                parameters.Add("Proveedor", facturacoexpo.Proveedor, DbType.String);
-                parameters.Add("TipoProveedor", facturacoexpo.TipoProveedor, DbType.Int64);
-                parameters.Add("Factura", facturacoexpo.Factura, DbType.String);
-                parameters.Add("Amount", facturacoexpo.Amount, DbType.Decimal);
+            var parameters = new DynamicParameters();
+            parameters.Add("CoexpoID", facturacoexpo.CoexpoID, DbType.Int64);
+
+            parameters.Add("InvoiceNo", facturacoexpo.InvoiceNo, DbType.Int64);
+            parameters.Add("Proveedor", facturacoexpo.Proveedor, DbType.String);
+            parameters.Add("TipoProveedor", facturacoexpo.TipoProveedor, DbType.String);
+            parameters.Add("Factura", facturacoexpo.Factura, DbType.String);
+            parameters.Add("Amount", facturacoexpo.Amount, DbType.Decimal);
+            parameters.Add("@ResultValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+            using (var conn = new SqlConnection(_configuration.Value)) {
 
                 await conn.ExecuteAsync("spFacturaCoexpo_Update", parameters, commandType: CommandType.StoredProcedure);
+                Success = parameters.Get<int>("@ResultValue");
             }
-            return true;
+            return Success;
+        }
+
+        public async Task<FacturaCoexpo> FacturaCoexpoGetLastRecord(int invoiceNo)
+        {
+            FacturaCoexpo facturaCoexpo = new FacturaCoexpo();
+            var parameters = new DynamicParameters();
+            parameters.Add("@invoiceNo", invoiceNo, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                facturaCoexpo = await conn.QueryFirstOrDefaultAsync<FacturaCoexpo>("spFacturaCoexpo_GetLastRecord", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return facturaCoexpo;
         }
 
         // Physically delete one FacturaCoexpo row based on its FacturaCoexpoID (SQL Delete)
         // This only works if you're already created the stored procedure.
         public async Task<bool> FacturaCoexpoDelete(int CoexpoID) {
             var parameters = new DynamicParameters();
-            parameters.Add("@CoexpoID", CoexpoID, DbType.Int32);
+            parameters.Add("@coexpoID", CoexpoID, DbType.Int32);
             using (var conn = new SqlConnection(_configuration.Value)) {
-                await conn.ExecuteAsync("spFacturaCoexpo_Delete", parameters, commandType: CommandType.StoredProcedure);
+                await conn.ExecuteAsync("spfacturaCoexpo_DeleteRecord", parameters, commandType: CommandType.StoredProcedure);
             }
             return true;
         }

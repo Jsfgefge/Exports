@@ -1,17 +1,21 @@
 ﻿@page "/"
 @using Export.Data
 
-@* AGREGAR TOOL TIP AL PAIS Y AL CONSIGNATARIO, ESTO EN CASO QUE NO TENGA ESPACIO SUFICIENTE (consignatario), en el caso del pais para poder de forma facil que pais es sin necesidad de agregar una tabla extra.
+@* AGREGAR TOOL TIP AL PAIS Y AL CONSIGNATARIO, ESTO EN CASO QUE NO TENGA ESPACIO SUFICIENTE (consignatario), en el caso del pais para poder ver de forma facil que pais es sin necesidad de agregar una tabla extra.
 
 Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de agregar cosas extras y hacer un esquema de colores. Tipo cuando una exportacion se cancelo rojo y cuando ya esta cerrada verde. Con esto los campos extra con los checkbox es redundante.
 *@
 
 <div class="col-sm-12">
-    <h3>Exports</h3>
-    <br />
-    <SfGrid DataSource="@exportheader"
-            Toolbar="@Toolbaritems">
+    <p>Exports</p>
+    <SfGrid DataSource="@exportHeaderList"
+            Toolbar="@Toolbaritems"
+            Height="700px"
+            AllowFiltering="true"
+            @ref="@exportHeadersGrid">
         <GridEvents OnToolbarClick="ToolbarClickHandler" OnRecordDoubleClick="RowDoubleClickHandler" RowSelected="RowSelectHandler" TValue="ExportHeader"></GridEvents>
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel">
+        </GridFilterSettings>
         <GridColumns>
             <GridColumn Field="@nameof(ExportHeader.InvoiceNo)"
                         HeaderText="Factura No."
@@ -51,6 +55,7 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
         </GridColumns>
     </SfGrid>
 </div>
+
 <SfDialog @ref="DialogAddExport"
           IsModal="true"
           Width="700px"
@@ -76,13 +81,17 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
                                     Placeholder="Consginatario"
                                     Enabled="true">
                         <DropDownListFieldSettings Text="NombreConsignatario" Value="ConsignatarioID" ></DropDownListFieldSettings>
-                        <DropDownListTemplates TItem="Consignatarios" Context="contextName">
-                            <ItemTemplate>
-                                <div class="name" title="@((contextName as Consignatarios).NombreConsignatario)">@((contextName as Consignatarios).NombreConsignatario)
-                                </div>
+                        <DropDownListTemplates TItem="Consignatarios">
+                            <ItemTemplate Context="contextName">
+                                <span class="item">
+                                    <span class="htsCode">
+                                        @((contextName as Consignatarios).NombreConsignatario)
+                                    </span>
+                                </span>
                             </ItemTemplate>
                         </DropDownListTemplates>
                     </SfDropDownList>
+
                     <SfDropDownList DataSource="@aduanas"
                                     TItem="Aduanas"
                                     TValue="int"
@@ -90,8 +99,24 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
                                     FloatLabelType="@FloatLabelType.Auto"
                                     Placeholder="Aduana"
                                     Enabled="true">
-                        <DropDownListFieldSettings Text="NombreAduana" Value="AduanasID"></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Aduanas">
+                            <ItemTemplate Context="contextName">
+                                <span class="item">
+                                    <span class="htsCode">
+                                        @((contextName as Aduanas).AbreviacionAduana)
+                                    </span>
+                                    <span class="description">
+                                        @((contextName as Aduanas).NombreAduana)
+                                    </span>
+                                </span>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
+                        <DropDownListFieldSettings Text="AbreviacionAduana" Value="AduanasID"></DropDownListFieldSettings>
                     </SfDropDownList>
+
+
+
+
                     <SfTextBox Enabled="true"                              
                                Placeholder="Descripcion"
                                FloatLabelType="@FloatLabelType.Auto"
@@ -108,11 +133,16 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
                                     Placeholder="Pais Destino"
                                     Enabled="true">
                         <DropDownListFieldSettings Text="CountryISO" Value="CountryID"></DropDownListFieldSettings>
-                        <DropDownListTemplates TItem="Country" Context="contextName">
-                            <ItemTemplate>
-                                <div class="name" title="@((contextName as Country).CountryName)">
-                                    @((contextName as Country).CountryName)
-                                </div>
+                        <DropDownListTemplates TItem="Country">
+                            <ItemTemplate Context="contextName">
+                                <span class="item">
+                                    <span class="htsCode">
+                                        @((contextName as Country).CountryISO)
+                                    </span>
+                                    <span class="description">
+                                        @((contextName as Country).CountryName)
+                                    </span>
+                                </span>
                             </ItemTemplate>
                         </DropDownListTemplates>
                     </SfDropDownList>
@@ -124,6 +154,15 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
                                     Placeholder="Cargador"
                                     Enabled="true">
                         <DropDownListFieldSettings Text="Descripcion" Value="CargadorID"></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Cargador">
+                            <ItemTemplate Context="contextName">
+                                <span class="item">
+                                    <span class="htsCode">
+                                        @((contextName as Cargador).Descripcion)
+                                    </span>
+                                </span>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
                     </SfDropDownList>
                     <SfDatePicker TValue="DateTime"
                                   Placeholder="Boarding Date"
@@ -168,9 +207,119 @@ Asi mismo, le faltan campos a esta madre creo. Aunque podria saltarme el paso de
                     <button type="button" class="e-btn e-normal" @onclick="@Cancel">Cancel</button>
                 </div>
             </div>
-
         </div>
-
     </EditForm>
-
 </SfDialog>
+
+
+<SfDialog @ref="ConfirmAnnul"
+          IsModal="true"
+          Width="500px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>Confirmar Anulacion</Header>
+    </DialogTemplates>
+    <EditForm Model="@annulExport">
+        <div>
+            <SfTextBox @ref="txt_ExportAnnul" Enabled="true" Placeholder="Motivo de anulacion:" FloatLabelType="@FloatLabelType.Always" @bind-Value="annulExport.Description">
+            </SfTextBox>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@ExportAnnul">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</SfDialog>
+<WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
+<style>
+    .grid-container {
+        display: grid;
+        max-width: 1600px; /* Maximum width of the whole container - in this case both columns */
+        grid-gap: 5px;
+        grid-template-columns: 4.1fr 3.2fr 4fr;
+    }
+
+    .row {
+        padding-bottom: 10px;
+    }
+
+    .e-grid * {
+        font-size: 11px !important;
+    }
+
+
+    /* To specify font size in SfTextBox */
+    .e-input:not(:valid), .e-input:valid, .e-float-input.e-control-wrapper input:not(:valid), .e-float-input.e-control-wrapper input:valid, .e-float-input input:not(:valid), .e-float-input input:valid, .e-input-group input:not(:valid), .e-input-group input:valid, .e-input-group.e-control-wrapper input:not(:valid), .e-input-group.e-control-wrapper input:valid, .e-float-input.e-control-wrapper textarea:not(:valid), .e-float-input.e-control-wrapper textarea:valid, .e-float-input textarea:not(:valid), .e-float-input textarea:valid, .e-input-group.e-control-wrapper textarea:not(:valid), .e-input-group.e-control-wrapper textarea:valid, .e-input-group textarea:not(:valid), .e-input-group textarea:valid {
+        font-size: 11px;
+    }
+
+    .e-float-input.e-control-wrapper:not(.e-error) input:valid ~ label.e-float-text, .e-float-input.e-control-wrapper:not(.e-error) input ~ label.e-label-top.e-float-text {
+        font-size: 11px;
+    }
+
+    label.e-float-text, .e-float-input:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom,
+    .e-float-input.e-control-wrapper:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom {
+        font-size: 11px;
+    }
+
+    .e-ddl.e-input-group .e-float-text.e-label-bottom {
+        font-size: 11px !important;
+    }
+
+    .head, .item {
+        display: table;
+        width: 100%;
+        margin: auto;
+        text-align: left;
+        font-size: 11px;
+    }
+
+
+
+    .head {
+        height: 30px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .htsCode,
+    .description {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    .htsCode {
+        width: 20%;
+    }
+
+    .description {
+        width: 80%;
+    }
+
+    .head .htsCode {
+        text-indent: 11px;
+    }
+
+    .head .description {
+        text-indent: 11px;
+    }
+
+    .e-ddl.e-input-group.e-control-wrapper .e-input {
+        font-size: 11px;
+    }
+
+    p {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    btn-font {
+        font-size: 20px;
+    }
+
+</style>

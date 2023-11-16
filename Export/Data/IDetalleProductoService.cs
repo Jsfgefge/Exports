@@ -19,5 +19,6 @@ namespace Export.Data {
         Task<DetalleProducto> DetalleProducto_GetOne(int ProductoID);
         Task<bool> DetalleProductoUpdate(DetalleProducto detalleproducto);
         Task<bool> DetalleProductoDelete(int ProductoID);
+        Task<DetalleProducto> DetalleProductoGetLastRecord(int invoiceNo);
     }
 }

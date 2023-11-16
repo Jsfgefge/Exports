@@ -28,7 +28,7 @@ namespace Export.Data
             parameters.Add("Categoria", categoria, DbType.String);
             parameters.Add("Cantidad", cantidad, DbType.Double);
             parameters.Add("Medida", medida, DbType.String);
-            parameters.Add("PricePerUnit", pricePerUnit, DbType.Int32);
+            parameters.Add("PricePerUnit", pricePerUnit, DbType.Decimal);
             parameters.Add("@ResultValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
             using (var conn = new SqlConnection(_configuration.Value))
             {
@@ -98,18 +98,26 @@ namespace Export.Data
             {
                 var parameters = new DynamicParameters();
                 parameters.Add("ProductoID", detalleproducto.ProductoID, DbType.Int64);
-
                 parameters.Add("InvoiceNo", detalleproducto.InvoiceNo, DbType.Int64);
-                parameters.Add("CodigoHTS", detalleproducto.CodigoHTS, DbType.String);
-                parameters.Add("Description", detalleproducto.Description, DbType.String);
-                parameters.Add("Categoria", detalleproducto.Categoria, DbType.String);
                 parameters.Add("Cantidad", detalleproducto.Cantidad, DbType.Int64);
-                parameters.Add("Medida", detalleproducto.Medida, DbType.Int64);
-                parameters.Add("PricePerUnit", detalleproducto.PricePerUnit, DbType.Int64);
+                parameters.Add("Medida", detalleproducto.Medida, DbType.String);
+                parameters.Add("PricePerUnit", detalleproducto.PricePerUnit, DbType.Decimal);
 
                 await conn.ExecuteAsync("spDetalleProducto_Update", parameters, commandType: CommandType.StoredProcedure);
             }
             return true;
+        }
+
+        public async Task<DetalleProducto> DetalleProductoGetLastRecord(int invoiceNo)
+        {
+            DetalleProducto detalleproducto = new DetalleProducto();
+            var parameters = new DynamicParameters();
+            parameters.Add("@invoiceNo", invoiceNo, DbType.Int32);
+            using (var conn = new SqlConnection(_configuration.Value))
+            {
+                detalleproducto = await conn.QueryFirstOrDefaultAsync<DetalleProducto>("spDetalleProducto_GetLastRecord", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return detalleproducto;
         }
 
         // Physically delete one DetalleProducto row based on its DetalleProductoID (SQL Delete)
@@ -117,10 +125,10 @@ namespace Export.Data
         public async Task<bool> DetalleProductoDelete(int ProductoID)
         {
             var parameters = new DynamicParameters();
-            parameters.Add("@ProductoID", ProductoID, DbType.Int32);
+            parameters.Add("@productID", ProductoID, DbType.Int32);
             using (var conn = new SqlConnection(_configuration.Value))
             {
-                await conn.ExecuteAsync("spDetalleProducto_Delete", parameters, commandType: CommandType.StoredProcedure);
+                await conn.ExecuteAsync("spDetalleProducto_DeleteRecord", parameters, commandType: CommandType.StoredProcedure);
             }
             return true;
         }

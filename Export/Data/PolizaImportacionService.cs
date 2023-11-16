@@ -34,10 +34,12 @@ namespace Export.Data {
         }
         // Get a list of polizaimportacion rows (SQL Select)
         // This only works if you're already created the stored procedure.
-        public async Task<IEnumerable<PolizaImportacion>> PolizaImportacionList() {
+        public async Task<IEnumerable<PolizaImportacion>> PolizaImportacionList(int invoiceNo) {
+            var parameters = new DynamicParameters();
+            parameters.Add("@invoiceNo", invoiceNo, DbType.Int32);
             IEnumerable<PolizaImportacion> polizaimportacions;
             using (var conn = new SqlConnection(_configuration.Value)) {
-                polizaimportacions = await conn.QueryAsync<PolizaImportacion>("spPolizaImportacion_List", commandType: CommandType.StoredProcedure);
+                polizaimportacions = await conn.QueryAsync<PolizaImportacion>("spPolizaImportacion_List", parameters, commandType: CommandType.StoredProcedure);
             }
             return polizaimportacions;
         }

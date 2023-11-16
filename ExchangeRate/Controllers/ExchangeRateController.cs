@@ -15,7 +15,7 @@ namespace ExchangeRate.Controllers
     {
         public decimal ExchangeRate;
         [HttpGet]
-        public async Task<IActionResult> GetAsync()
+        public async Task<decimal> GetAsync()
         {
             TipoCambioSoapClient client = new TipoCambioSoapClient(TipoCambioSoapClient.EndpointConfiguration.TipoCambioSoap12);
 
@@ -27,7 +27,7 @@ namespace ExchangeRate.Controllers
 
             await client.CloseAsync();
 
-            return Ok(vars.Body.VariablesResult.CambioDolar.ToList()[0].referencia);
+            return ExchangeRate;
         }
     }
 }

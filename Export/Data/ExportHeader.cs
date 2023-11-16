@@ -30,7 +30,7 @@ namespace Export.Data {
         public int DocTypeID { get; set; }
         public int DuaSimplificada { get; set; }
         [StringLength(255)]
-        public string Complementaria { get; set; }
+        public int Complementaria { get; set; }
         [Required]
         public int IncotermID { get; set; }
         public bool Closed { get; set; }
@@ -43,5 +43,6 @@ namespace Export.Data {
         public string abreviacionAduana { get; set; }
         public string countryISO { get; set; }
         public string cargador { get; set; }
+        public bool isAnnuled { get; set; }
     }
 }

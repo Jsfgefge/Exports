@@ -11,12 +11,11 @@ namespace Export.Data {
         [StringLength(255)]
         public string Proveedor { get; set; }
         [Required]
-        public int TipoProveedor { get; set; }
+        public string TipoProveedor { get; set; }
         [Required]
         [StringLength(255)]
         public string Factura { get; set; }
         [Required]
         public decimal Amount { get; set; }
-
     }
 }

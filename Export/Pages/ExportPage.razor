@@ -1,8 +1,9 @@
 ﻿@page "/exportHeader/{InvoiceNo:int}"
 @* URL temporal, posteriormente sera cambiada para usar GUID *@
 @using Export.Data
+@using Syncfusion.Blazor.DropDowns
 
-<h5>Export - @('B')@InvoiceNo</h5>
+<p>Export - @('B')@InvoiceNo</p>
 
 @* GridHeader *@
 <div class="container border">
@@ -59,6 +60,45 @@
                        FloatLabelType="@FloatLabelType.Always"
             @bind-Value="@exportheader.Description">
             </SfTextBox>
+
+            <SfTextBox Enabled="false"
+                       Placeholder="Numero Factura SAT"
+                       FloatLabelType="@FloatLabelType.Always"
+            @bind-Value="@exportheader.SerialNo">
+            </SfTextBox>
+            <SfNumericTextBox Enabled="false"
+                              ShowSpinButton="false"
+                              Placeholder="Dua Simplificada"
+                              Format="d"
+                              FloatLabelType="@FloatLabelType.Always"
+            @bind-Value="@exportheader.DuaSimplificada">
+            </SfNumericTextBox>
+            <div class="row">
+                <div class="col-sm-4 border" style="text-align:left; font-size:small;">
+                    <SfDropDownList DataSource="@doctype"
+                                    TItem="docType"
+                                    TValue="int"
+                    @bind-Value="exportheader.DocTypeID"
+                                    Enabled="true">
+                        @docTypelabel
+                        <DropDownListFieldSettings Text="docName" Value="docID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="col-sm-4 border" style="text-align:left; font-size:small;">
+                    <SfDropDownList DataSource="@incoterms"
+                                    TItem="Incoterms"
+                                    TValue="int"
+                    @bind-Value="exportheader.IncotermID"
+                                    Enabled="true">
+                        @incotermslabel
+                        <DropDownListFieldSettings Text="incoterm" Value="incotermID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="col-sm-4 border">
+                    <SfCheckBox Checked="@isCheckedClosed" Disabled="true" CssClass="chk-center">Closed</SfCheckBox>
+                </div>
+
+            </div>
         </div>
         <div class="col-sm-3 border">
             <div class="row border">
@@ -77,24 +117,22 @@
                     </SfDatePicker>
                 </div>
             </div>
-            <div class="row border">
+            <div class="row border" style="padding:19px 0;">
                 <div class="col-sm-8 border">
-                    <SfTextBox Enabled="false"
-                               Placeholder="Numero Factura SAT"
-                               FloatLabelType="@FloatLabelType.Always"
-                    @bind-Value="@exportheader.SerialNo">
-                    </SfTextBox>
                     <SfNumericTextBox Enabled="false"
                                       ShowSpinButton="false"
-                                      Placeholder="Dua Simplificada"
+                                      Format="d"
+                                      Placeholder="Complementaria"
                                       FloatLabelType="@FloatLabelType.Always"
-                    @bind-Value="@exportheader.DuaSimplificada">
+                    @bind-Value="@exportheader.Complementaria">
                     </SfNumericTextBox>
                 </div>
                 <div class="col-sm-4 border" style="place-self:center;">
-                    <button>
-                        Editar
-                    </button>
+                    <div class="button-container">
+                        <button type="button" class="e-btn e-normal e-info" @onclick="@openEdit" disabled="@isAnnuled">
+                            Editar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,19 +143,19 @@
 <br />
 
 @* Grid DetalleProducto, Poliza, FacturaCoexpo *@
-<div class="grid-container" style="font-size:14px; font-weight:bold;">
+<div class="grid-container" style="font-size:13px; font-weight:bold;">
     <div class="grid-child border">
         Detalle producto
         <SfGrid DataSource="@productosList"
-                @ref="@detalleProductoGrid"
+        @ref="@detalleProductoGrid"
                 Toolbar="@ToolbaritemsProds"
-                Width="575px"
+                Width="600px"
                 AllowTextWrap="true"
                 RowHeight="20"
                 Height="350px"
                 AllowResizing="true">
-               <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
-            <GridEvents OnToolbarClick="ToolbarClickHandlerProds" TValue="DetalleProducto"></GridEvents>
+            <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
+            <GridEvents OnToolbarClick="ToolbarClickHandlerProds" RowSelected="RowSelectHandlerProducto" TValue="DetalleProducto"></GridEvents>
             <GridColumns>
                 <GridColumn Field="@nameof(DetalleProducto.CodigoHTS)"
                             HeaderText="HTS"
@@ -126,8 +164,8 @@
                 </GridColumn>
                 <GridColumn Field="@nameof(DetalleProducto.Description)"
                             HeaderText="Descripcion"
-                            TextAlign="TextAlign.Left"                            
-                            Width="30%">
+                            TextAlign="TextAlign.Left"
+                            Width="35%">
                 </GridColumn>
                 <GridColumn Field="@nameof(DetalleProducto.Categoria)"
                             HeaderText="Categoria"
@@ -155,6 +193,7 @@
     <div class="grid-child border">
         Poliza Importacion
         <SfGrid DataSource="@polizaimportacion"
+        @ref="@polizaImportacionGrid"
                 Toolbar="@ToolbaritemsPoliza"
                 Width="455px"
                 RowHeight="20"
@@ -199,15 +238,16 @@
     </div>
     <div class="grid-child border">
         Co-Ex/Subcontratista/Complementariedad/Nacional
-        <SfGrid DataSource="@facturacoexpo"
+        <SfGrid DataSource="@facturaCoexList"
+        @ref="@facturaCoexpoGrid"
                 Toolbar="@ToolbaritemsCoexpo"
-                Width="520px"
+                Width="545px"
                 RowHeight="20"
                 Height="350px"
                 AllowResizing="true"
                 AllowTextWrap="true">
             <GridTextWrapSettings WrapMode="WrapMode.Content"></GridTextWrapSettings>
-            <GridEvents OnToolbarClick="ToolbarClickHandlerCoexpo" TValue="FacturaCoexpo"></GridEvents>
+            <GridEvents OnToolbarClick="ToolbarClickHandlerCoexpo" RowSelected="RowSelectHandlerFactura" TValue="FacturaCoexpo"></GridEvents>
             <GridColumns>
                 <GridColumn Field="@nameof(FacturaCoexpo.Proveedor)"
                             HeaderText="Proveedor"
@@ -216,12 +256,12 @@
                 </GridColumn>
                 <GridColumn Field="@nameof(FacturaCoexpo.TipoProveedor)"
                             HeaderText="Tipo"
-                            Width="20%"
+                            Width="25%"
                             TextAlign="TextAlign.Left">
                 </GridColumn>
                 <GridColumn Field="@nameof(FacturaCoexpo.Factura)"
                             HeaderText="Factura"
-                            Width="35%"
+                            Width="30%"
                             TextAlign="TextAlign.Left">
                 </GridColumn>
                 <GridColumn Field="@nameof(FacturaCoexpo.Amount)"
@@ -244,15 +284,15 @@
         <Header> Agregar descripcion producto </Header>
     </DialogTemplates>
     <EditForm Model="@addeditDetalleProduct">
-        <h5>@('B')@addeditDetalleProduct.InvoiceNo</h5>
+        <p>@('B')@addeditDetalleProduct.InvoiceNo</p>
         <SfDropDownList DataSource="@hts"
                         TItem="HTS"
                         TValue="string"
                         Text="htsCodigo"
-                        @bind-Value="@addeditDetalleProduct.CodigoHTS"
+        @bind-Value="@addeditDetalleProduct.CodigoHTS"
                         FloatLabelType="@FloatLabelType.Auto"
                         Placeholder="HTS"
-                        Enabled="true">
+                        Enabled="@isEnableOnEdit">
             <DropDownListTemplates TItem="HTS">
                 <HeaderTemplate>
                     <span class="head">
@@ -275,22 +315,22 @@
                     </span>
                 </ItemTemplate>
             </DropDownListTemplates>
-            <DropDownListFieldSettings Text="htsCodigo" Value="htsCodigo"></DropDownListFieldSettings>      
+            <DropDownListFieldSettings Text="htsCodigo" Value="htsCodigo"></DropDownListFieldSettings>
             <DropDownListEvents TItem="HTS" TValue="string" OnValueSelect="OnChange"></DropDownListEvents>
         </SfDropDownList>
-        <SfTextBox Enabled="true"
+        <SfTextBox Enabled="@isEnableOnEdit"
                    Placeholder="Descripcion"
                    FloatLabelType="@FloatLabelType.Auto"
-                   @bind-Value="@addeditDetalleProduct.Description">
+        @bind-Value="@addeditDetalleProduct.Description">
         </SfTextBox>
-        <SfTextBox Enabled="true"
+        <SfTextBox Enabled="@isEnableOnEdit"
                    Placeholder="Categoria"
                    FloatLabelType="@FloatLabelType.Auto"
         @bind-Value="@addeditDetalleProduct.Categoria">
         </SfTextBox>
-        <SfNumericTextBox Enabled="true"
-                   Placeholder="Cantidad"
-                   FloatLabelType="@FloatLabelType.Auto"
+        <SfNumericTextBox Enabled="@isEnableOnDelete"
+                          Placeholder="Cantidad"
+                          FloatLabelType="@FloatLabelType.Auto"
                           ShowSpinButton="false"
         @bind-Value="@addeditDetalleProduct.Cantidad">
         </SfNumericTextBox>
@@ -298,10 +338,10 @@
                         TItem="Medida"
                         TValue="string"
                         Text="medida"
-                        @bind-Value="@addeditDetalleProduct.Medida"
+        @bind-Value="@addeditDetalleProduct.Medida"
                         FloatLabelType="@FloatLabelType.Auto"
-                        Placeholder="Medida"                        
-                        Enabled="true">
+                        Placeholder="Medida"
+                        Enabled="@isEnableOnDelete">
             <DropDownListTemplates TItem="Medida">
                 <ItemTemplate Context="contextName">
                     <span class="item">
@@ -313,16 +353,12 @@
             </DropDownListTemplates>
             <DropDownListFieldSettings Text="medida" Value="medida"></DropDownListFieldSettings>
         </SfDropDownList>
-        <SfNumericTextBox Enabled="true"
-                   Placeholder="Precio por unidad"
-                   FloatLabelType="@FloatLabelType.Auto"
-                   ShowSpinButton="false"
+        <SfNumericTextBox Enabled="@isEnableOnDelete"
+                          Placeholder="Precio por unidad"
+                          FloatLabelType="@FloatLabelType.Auto"
+                          ShowSpinButton="false"
         @bind-Value="@addeditDetalleProduct.PricePerUnit">
         </SfNumericTextBox>
-
-
-
-
 
         <div class="e-footer-content">
             <div class="button-container">
@@ -356,20 +392,249 @@
           IsModal="true"
           ShowCloseIcon="true"
           Visible="false"
-          Width="600px">
+          Width="400px">
     <DialogTemplates>
         <Header> Agregar descripcion producto </Header>
     </DialogTemplates>
-    <EditForm Model="@addeditDetalleProduct">
+    <EditForm Model="@addeditFacturaCoexpo">
+        <SfDropDownList DataSource="@proveedor"
+                        TItem="Proveedor"
+                        Enabled="@isEnableOnEdit"
+                        TValue="string"
+                        Text="nombreProveedor"
+        @bind-Value="@addeditFacturaCoexpo.Proveedor"
+                        FloatLabelType="@FloatLabelType.Auto"
+                        Placeholder="Proveedor">
+            <DropDownListTemplates TItem="Proveedor">
+                <ItemTemplate Context="contextName">
+                    <span class="item">
+                        <span class="htsCode">
+                            @((contextName as Proveedor).nombreProveedor)
+                        </span>
+                    </span>
+                </ItemTemplate>
+            </DropDownListTemplates>
+            <DropDownListFieldSettings Text="nombreProveedor" Value="nombreProveedor"></DropDownListFieldSettings>
+        </SfDropDownList>
+
+        <SfDropDownList DataSource="@tipoproveedor"
+                        TItem="TipoProveedor"
+                        TValue="string"
+                        Enabled="@isEnableOnEdit"
+                        Text="tipoProveedor"
+        @bind-Value="@addeditFacturaCoexpo.TipoProveedor"
+                        FloatLabelType="@FloatLabelType.Auto"
+                        Placeholder="Tipo">
+            <DropDownListTemplates TItem="TipoProveedor">
+                <ItemTemplate Context="contextName">
+                    <span class="item">
+                        <span class="htsCode">
+                            @((contextName as TipoProveedor).tipoProveedor)
+                        </span>
+                    </span>
+                </ItemTemplate>
+            </DropDownListTemplates>
+            <DropDownListFieldSettings Text="tipoProveedor" Value="tipoProveedor"></DropDownListFieldSettings>
+        </SfDropDownList>
+
+        <SfTextBox Enabled="@isEnableOnEdit"
+                   Placeholder="Factura"
+                   FloatLabelType="@FloatLabelType.Auto"
+        @bind-Value="@addeditFacturaCoexpo.Factura">
+        </SfTextBox>
+
+        <SfNumericTextBox Enabled="@isEnableOnEdit"
+                          Placeholder="Monto"
+                          FloatLabelType="@FloatLabelType.Auto"
+                          ShowSpinButton="false"
+        @bind-Value="@addeditFacturaCoexpo.Amount">
+        </SfNumericTextBox>
         <br />
         <div class="e-footer-content">
             <div class="button-container">
-                <button type="button" class="e-btn e-normal e-primary" @onclick="@ProductSave">Save</button>
+                <button type="button" class="e-btn e-normal e-primary" @onclick="@FacturaCoexpoSave">Save</button>
                 <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Cancel</button>
             </div>
         </div>
     </EditForm>
 </SfDialog>
+
+
+
+<SfDialog @ref="DialogEditExport"
+          IsModal="true"
+          Width="700px"
+          ShowCloseIcon="true"
+          Visible="false">
+    <DialogTemplates>
+        <Header>Edit Export</Header>
+    </DialogTemplates>
+    <EditForm Model="@editExport">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <SfDatePicker TValue="DateTime"
+                                  Placeholder="Invoice Date"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="editExport.InvoiceDate">
+                    </SfDatePicker>
+                    <SfDropDownList DataSource="@consignatarios"
+                                    TItem="Consignatarios"
+                                    TValue="int"
+                    @bind-Value="editExport.ConsignatarioID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Consginatario"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="NombreConsignatario" Value="ConsignatarioID"></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Consignatarios" Context="contextName">
+                            <ItemTemplate>
+                                <div class="name" title="@((contextName as Consignatarios).NombreConsignatario)">
+                                    @((contextName as Consignatarios).NombreConsignatario)
+                                </div>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
+                    </SfDropDownList>
+                    <SfDropDownList DataSource="@aduanas"
+                                    TItem="Aduanas"
+                                    TValue="int"
+                    @bind-Value="editExport.AduanasID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Aduana"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="NombreAduana" Value="AduanasID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                    <SfTextBox Enabled="true"
+                               Placeholder="Descripcion"
+                               FloatLabelType="@FloatLabelType.Auto"
+                               CssClass="e-style"
+                    @bind-Value="editExport.Description">
+                    </SfTextBox>
+                </div>
+                <div class="col-sm-5">
+                    <SfDropDownList DataSource="@country"
+                                    TItem="Country"
+                                    TValue="int"
+                    @bind-Value="editExport.CountryID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Pais Destino"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="CountryISO" Value="CountryID"></DropDownListFieldSettings>
+                        <DropDownListTemplates TItem="Country" Context="contextName">
+                            <ItemTemplate>
+                                <div class="name" title="@((contextName as Country).CountryName)">
+                                    @((contextName as Country).CountryName)
+                                </div>
+                            </ItemTemplate>
+                        </DropDownListTemplates>
+                    </SfDropDownList>
+                    <SfDropDownList DataSource="@cargador"
+                                    TItem="Cargador"
+                                    TValue="int"
+                    @bind-Value="editExport.CargadorID"
+                                    FloatLabelType="@FloatLabelType.Auto"
+                                    Placeholder="Cargador"
+                                    Enabled="true">
+                        <DropDownListFieldSettings Text="Descripcion" Value="CargadorID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                    <SfDatePicker TValue="DateTime"
+                                  Placeholder="Boarding Date"
+                                  FloatLabelType="@FloatLabelType.Auto"
+                    @bind-Value="editExport.BoardingDate">
+                    </SfDatePicker>
+
+
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <SfNumericTextBox Enabled="false"
+                                              Placeholder="Taza de cambio"
+                                              FloatLabelType="@FloatLabelType.Auto"
+                                              CssClass="e-style"
+                                              Format=""
+                                              ShowSpinButton="false"
+                            @ref="txtExchangeRate"
+                            @bind-Value="editExport.ExchangeRate">
+                            </SfNumericTextBox>
+                        </div>
+                        <div class="col-sm-3">
+                            <br />
+                            <button class="e-btn e-add" style="margin-top:2px;"><i class ="bi bi-arrow-counterclockwise" @onclick="@ExchangeRateRefresh"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+
+                    <SfTextBox Enabled="@isEnableOnEdit"
+                               Placeholder="Factura"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@editExport.SerialNo">
+                    </SfTextBox>
+
+                    <SfNumericTextBox Enabled="@isEnableOnEdit"
+                                      Placeholder="Dua Simplificada"
+                                      Format="d"
+                                      FloatLabelType="@FloatLabelType.Auto"
+                                      ShowSpinButton="false"
+                    @bind-Value="@editExport.DuaSimplificada">
+                    </SfNumericTextBox>
+
+                </div>
+                <div class="col-sm-5">
+
+                    <SfNumericTextBox Enabled="@isEnableOnEdit"
+                               Placeholder="Complementaria"
+                               Format="d"
+                               ShowSpinButton="false"
+                               FloatLabelType="@FloatLabelType.Always"
+                    @bind-Value="@editExport.Complementaria">
+                    </SfNumericTextBox><br /><br />
+                    <SfCheckBox @bind-Checked="@isCheckedClosed">Closed</SfCheckBox>
+
+                </div>
+            </div>
+        </div>
+        <br /><br />
+        <div class="e-footer-content">
+            <div class="row">
+                <div class="col-sm-2" style="text-align:left;font-size:small;">
+                    <SfDropDownList DataSource="@doctype"
+                                    TItem="docType"
+                                    TValue="int"
+                    @bind-Value="editExport.DocTypeID"
+                                    Enabled="true">
+                        @docTypelabel
+                        <DropDownListFieldSettings Text="docName" Value="docID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="col-sm-2" style="text-align:left; font-size:small;">
+                    <SfDropDownList DataSource="@incoterms"
+                                    TItem="Incoterms"
+                                    TValue="int"
+                    @bind-Value="editExport.IncotermID"
+                                    Enabled="true">
+                        @incotermslabel
+                        <DropDownListFieldSettings Text="incoterm" Value="incotermID"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+
+                <div class="col-sm button-container">
+                    <button type="button" class="e-btn e-normal e-primary" @onclick="@editSave">Save</button>
+                    <button type="button" class="e-btn e-normal" @onclick="@Cancel">Cancel</button>
+                </div>
+            </div>
+
+        </div>
+
+    </EditForm>
+
+</SfDialog>
+
 
 
 <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage"></WarningPage>
@@ -378,11 +643,11 @@
     .grid-container {
         display: grid;
         max-width: 1600px; /* Maximum width of the whole container - in this case both columns */
-        grid-gap:5px;
+        grid-gap: 5px;
         grid-template-columns: 4.1fr 3.2fr 4fr;
     }
 
-    .row{
+    .row {
         padding-bottom: 10px;
     }
 
@@ -397,12 +662,16 @@
     }
 
     .e-float-input.e-control-wrapper:not(.e-error) input:valid ~ label.e-float-text, .e-float-input.e-control-wrapper:not(.e-error) input ~ label.e-label-top.e-float-text {
-        font-size: 14px;
+        font-size: 11px;
     }
 
     label.e-float-text, .e-float-input:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom,
     .e-float-input.e-control-wrapper:not(.e-error):not(.e-input-focus) input:not(:focus):valid ~ label.e-float-text.e-label-bottom {
-        font-size: 14px;
+        font-size: 11px;
+    }
+
+    .e-ddl.e-input-group .e-float-text.e-label-bottom {
+        font-size: 11px !important;
     }
 
     .head, .item {
@@ -410,14 +679,14 @@
         width: 100%;
         margin: auto;
         text-align: left;
-        font-size:11px;
+        font-size: 11px;
     }
 
-    
+
 
     .head {
         height: 30px;
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 600;
     }
 
@@ -437,17 +706,29 @@
     }
 
     .head .htsCode {
-        text-indent: 17px;
+        text-indent: 11px;
     }
 
     .head .description {
-        text-indent: 14px;
+        text-indent: 11px;
     }
 
     .e-ddl.e-input-group.e-control-wrapper .e-input {
-        font-size: 14px;
+        font-size: 11px;
     }
 
+    p {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    btn-font {
+        font-size: 20px;
+    }
+
+    .chk-center {
+        padding: 15px 0;
+    }
 </style>
 
 @code {

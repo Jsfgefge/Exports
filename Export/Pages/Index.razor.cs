@@ -29,6 +29,9 @@ namespace Export.Pages
         ICargadorService CargadorService { get; set; }
 
 
+
+        List<ExportHeader> exportHeaderList = new List<ExportHeader>();
+
         //private Guid selectedPOHeaderGuid { get; set; }
 
         private int selectedInvoiceID { get; set; } = 0;
@@ -86,7 +89,12 @@ namespace Export.Pages
         private List<ItemModel> Toolbaritems = new List<ItemModel>();
 
         ExportHeader addExport = new ExportHeader();
+        ExportHeader annulExport = new ExportHeader();
+
+        SfGrid<ExportHeader> exportHeadersGrid;
         SfDialog DialogAddExport;
+        SfDialog ConfirmAnnul;
+        SfTextBox txt_ExportAnnul;
 
         protected override async Task OnInitializedAsync()
         {
@@ -101,20 +109,20 @@ namespace Export.Pages
 
             addExport.DocTypeID = 1;
             addExport.IncotermID = 4;
+            addExport.ExchangeRate = await exchangeRate.GetAsync(); ;
 
-            exchangeRate.GetAsync();
+            exportHeaderList = exportheader.ToList();
 
             newerInvoiceNo = exportheader.ToList()[0].InvoiceNo;
-            Toolbaritems.Add(new ItemModel() { Text = "Add", TooltipText = "Add a new export", PrefixIcon = "e-add" });
-            Toolbaritems.Add(new ItemModel() { Text = "Edit", TooltipText = "Add a new export", PrefixIcon = "e-add" });
-            Toolbaritems.Add(new ItemModel() { Text = "Delete", TooltipText = "Add a new export", PrefixIcon = "e-add" });
+            Toolbaritems.Add(new ItemModel() { Text = "Add", TooltipText = "Add a new export", PrefixIcon = "e-add"});
+            Toolbaritems.Add(new ItemModel() { Text = "Edit", TooltipText = "Add a new export", PrefixIcon = "e-edit" });
+            Toolbaritems.Add(new ItemModel() { Text = "Delete", TooltipText = "Add a new export", PrefixIcon = "e-delete"});
         }
 
-        public void ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+        public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
         {
             if (args.Item.Text == "Add")
             {
-                addExport.ExchangeRate = (decimal)exchangeRate.ExchangeRate;
                 //Code for add
                 DialogAddExport.ShowAsync();
             }
@@ -134,7 +142,19 @@ namespace Export.Pages
             if (args.Item.Text == "Delete")
             {
                 //Code for delete
+                if (selectedInvoiceID == 0)
+                {
+                    WarningHeaderMessage = "Warning!";
+                    WarningContentMessage = "Please select an Export from the grid.";
+                    Warning.OpenDialog();
+                }
+                else
+                {
+                    ConfirmAnnul.ShowAsync();
+                }
             }
+            exportheader = await ExportHeaderService.ExportHeaderList();
+                    StateHasChanged();
         }
 
         public void RowSelectHandler(RowSelectEventArgs<ExportHeader> args)
@@ -160,5 +180,24 @@ namespace Export.Pages
             this.DialogAddExport.HideAsync();
         }
 
+        private void CloseDialog()
+        {
+            this.ConfirmAnnul.HideAsync();
+        }
+
+        private async Task ExportAnnul()
+        {
+            annulExport.AnulledDate = DateTime.Now;
+            annulExport.InvoiceNo = selectedInvoiceID;
+            await ExportHeaderService.ExportHeaderDelete(annulExport.InvoiceNo,
+                                                        annulExport.Description,
+                                                        annulExport.AnulledDate);
+
+            exportheader = await ExportHeaderService.ExportHeaderList();
+            exportHeaderList = exportheader.ToList();
+            exportHeadersGrid.Refresh();
+            StateHasChanged();
+            ConfirmAnnul.HideAsync();
+        }
     }
 }
